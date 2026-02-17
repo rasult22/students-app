@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
 import { availableInterests, interestCategories } from '../../data/interests';
-import { Button, Input } from '../../components/ui';
+import { Button, Input, Icon } from '../../components/ui';
 import { PageTransition } from '../../components/layout';
 import type { Interest } from '../../types';
 import styles from './Onboarding.module.css';
@@ -62,7 +63,7 @@ export function Onboarding() {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className={styles.starField}>
-                {[...Array(20)].map((_, i) => (
+                {[...Array(10)].map((_, i) => (
                   <motion.div
                     key={i}
                     className={styles.star}
@@ -86,7 +87,7 @@ export function Onboarding() {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               >
-                ✦
+                <Sparkles size={64} />
               </motion.div>
 
               <motion.h1
@@ -125,7 +126,7 @@ export function Onboarding() {
                 <Button
                   size="lg"
                   onClick={() => setStep('name')}
-                  icon={<span>→</span>}
+                  icon={<ArrowRight size={18} />}
                   iconPosition="right"
                 >
                   Начать путь
@@ -236,9 +237,7 @@ export function Onboarding() {
                               whileHover={{ scale: isDisabled ? 1 : 1.05 }}
                               whileTap={{ scale: isDisabled ? 1 : 0.95 }}
                             >
-                              <span className={styles.interestIcon}>
-                                {interest.icon}
-                              </span>
+                              <Icon name={interest.icon} size={16} className={styles.interestIcon} />
                               <span className={styles.interestName}>
                                 {interest.name}
                               </span>

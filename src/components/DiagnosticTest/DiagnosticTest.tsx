@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Zap, BarChart3, Target, Check, X, Star, ChevronRight } from 'lucide-react';
 import type { Subject, DiagnosticQuestion } from '../../types';
 import { getQuestionsForSubject } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
@@ -203,7 +204,7 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
             exit={{ opacity: 0, y: -20 }}
             className={styles.introScreen}
           >
-            <div className={styles.introIcon}>🔍</div>
+            <div className={styles.introIcon}><Search size={48} /></div>
             <h2 className={styles.introTitle}>Диагностика знаний</h2>
             <p className={styles.introDescription}>
               Мы зададим несколько вопросов по разным разделам курса, чтобы
@@ -213,15 +214,15 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
 
             <div className={styles.introFeatures}>
               <div className={styles.feature}>
-                <span className={styles.featureIcon}>⚡</span>
+                <Zap size={18} className={styles.featureIcon} />
                 <span>Адаптивный алгоритм</span>
               </div>
               <div className={styles.feature}>
-                <span className={styles.featureIcon}>📊</span>
+                <BarChart3 size={18} className={styles.featureIcon} />
                 <span>~10-15 вопросов</span>
               </div>
               <div className={styles.feature}>
-                <span className={styles.featureIcon}>🎯</span>
+                <Target size={18} className={styles.featureIcon} />
                 <span>Персональный план</span>
               </div>
             </div>
@@ -251,9 +252,9 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
                 </span>
               </div>
               <div className={styles.difficultyBadge} data-difficulty={currentQuestion.difficulty}>
-                {currentQuestion.difficulty === 'beginner' && '★'}
-                {currentQuestion.difficulty === 'intermediate' && '★★'}
-                {currentQuestion.difficulty === 'advanced' && '★★★'}
+                {currentQuestion.difficulty === 'beginner' && <Star size={14} />}
+                {currentQuestion.difficulty === 'intermediate' && <><Star size={14} /><Star size={14} /></>}
+                {currentQuestion.difficulty === 'advanced' && <><Star size={14} /><Star size={14} /><Star size={14} /></>}
               </div>
             </div>
 
@@ -303,7 +304,7 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
                   >
                     <div className={styles.feedbackHeader}>
                       <span className={styles.feedbackIcon}>
-                        {isCorrect ? '✓' : '✗'}
+                        {isCorrect ? <Check size={20} /> : <X size={20} />}
                       </span>
                       <span className={styles.feedbackTitle}>
                         {isCorrect ? 'Правильно!' : 'Неправильно'}
@@ -329,7 +330,7 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
                     Ответить
                   </Button>
                 ) : (
-                  <Button onClick={handleNextQuestion} fullWidth>
+                  <Button onClick={handleNextQuestion} fullWidth icon={<ChevronRight size={18} />} iconPosition="right">
                     Следующий вопрос
                   </Button>
                 )}
@@ -347,7 +348,7 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
             className={styles.resultsScreen}
           >
             <div className={styles.resultsHeader}>
-              <div className={styles.resultsIcon}>📊</div>
+              <div className={styles.resultsIcon}><BarChart3 size={48} /></div>
               <h2 className={styles.resultsTitle}>Результаты диагностики</h2>
               <p className={styles.resultsDescription}>
                 На основе ваших ответов мы определили уровень знаний по каждому разделу

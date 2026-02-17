@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { Check, Circle, CircleDot, AlertCircle, Clock, Star, BarChart3, Sparkles } from 'lucide-react';
 import type { Subject, Topic, MasteryLevel } from '../../types';
 import { useAppStore } from '../../stores/appStore';
 import { Button, Card } from '../ui';
@@ -63,13 +64,13 @@ export function LearningPlan({ subject }: LearningPlanProps) {
   const getMasteryIcon = (mastery: MasteryLevel) => {
     switch (mastery) {
       case 'mastered':
-        return '✓';
+        return <Check size={14} />;
       case 'learning':
-        return '◐';
+        return <CircleDot size={14} />;
       case 'struggling':
-        return '!';
+        return <AlertCircle size={14} />;
       default:
-        return '○';
+        return <Circle size={14} />;
     }
   };
 
@@ -115,7 +116,7 @@ export function LearningPlan({ subject }: LearningPlanProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <span className={styles.noteIcon}>✨</span>
+          <Sparkles size={16} className={styles.noteIcon} />
           <span>
             Примеры адаптированы под твои интересы:{' '}
             {user.interests.slice(0, 3).map((i) => i.name).join(', ')}
@@ -154,14 +155,14 @@ export function LearningPlan({ subject }: LearningPlanProps) {
 
                 <div className={styles.topicMeta}>
                   <span className={styles.metaItem}>
-                    <span className={styles.metaIcon}>⏱️</span>
+                    <Clock size={14} className={styles.metaIcon} />
                     ~{topic.estimatedMinutes} мин
                   </span>
                   <span className={styles.metaItem}>
                     <span className={styles.metaIcon}>
-                      {topic.difficulty === 'beginner' && '★'}
-                      {topic.difficulty === 'intermediate' && '★★'}
-                      {topic.difficulty === 'advanced' && '★★★'}
+                      {topic.difficulty === 'beginner' && <Star size={14} />}
+                      {topic.difficulty === 'intermediate' && <><Star size={14} /><Star size={14} /></>}
+                      {topic.difficulty === 'advanced' && <><Star size={14} /><Star size={14} /><Star size={14} /></>}
                     </span>
                     {topic.difficulty === 'beginner' && 'Начальный'}
                     {topic.difficulty === 'intermediate' && 'Средний'}
@@ -169,7 +170,7 @@ export function LearningPlan({ subject }: LearningPlanProps) {
                   </span>
                   {topic.score > 0 && (
                     <span className={styles.metaItem}>
-                      <span className={styles.metaIcon}>📊</span>
+                      <BarChart3 size={14} className={styles.metaIcon} />
                       {topic.score}%
                     </span>
                   )}
@@ -188,13 +189,13 @@ export function LearningPlan({ subject }: LearningPlanProps) {
       {skippedTopics.length > 0 && (
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>
-            <span className={styles.skippedIcon}>✓</span>
+            <Check size={18} className={styles.skippedIcon} />
             Уже освоено ({skippedTopics.length})
           </h3>
           <div className={styles.skippedList}>
             {skippedTopics.map((topic) => (
               <div key={topic.id} className={styles.skippedItem}>
-                <span className={styles.skippedCheck}>✓</span>
+                <Check size={14} className={styles.skippedCheck} />
                 <span className={styles.skippedName}>{topic.name}</span>
                 <span className={styles.skippedScore}>{topic.score}%</span>
               </div>

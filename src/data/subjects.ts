@@ -5,7 +5,7 @@ export const subjects: Subject[] = [
     id: 'linear-algebra',
     name: 'Линейная алгебра',
     description: 'Векторы, матрицы, системы линейных уравнений и линейные преобразования',
-    icon: '🔢',
+    icon: 'calculator',
     color: '#00d4aa',
     estimatedHours: 40,
     sections: [
@@ -195,7 +195,7 @@ export const subjects: Subject[] = [
     id: 'calculus',
     name: 'Математический анализ',
     description: 'Пределы, производные, интегралы и ряды',
-    icon: '∫',
+    icon: 'sigma',
     color: '#a78bfa',
     estimatedHours: 60,
     sections: [
@@ -259,7 +259,7 @@ export const subjects: Subject[] = [
     id: 'probability',
     name: 'Теория вероятностей',
     description: 'Случайные события, вероятности, распределения',
-    icon: '🎲',
+    icon: 'dices',
     color: '#fbbf24',
     estimatedHours: 35,
     sections: [

@@ -2,67 +2,67 @@ import type { Interest } from '../types';
 
 export const availableInterests: Interest[] = [
   // Sports
-  { id: 'football', name: 'Футбол', icon: '⚽', category: 'sports' },
-  { id: 'basketball', name: 'Баскетбол', icon: '🏀', category: 'sports' },
-  { id: 'tennis', name: 'Теннис', icon: '🎾', category: 'sports' },
-  { id: 'swimming', name: 'Плавание', icon: '🏊', category: 'sports' },
-  { id: 'cycling', name: 'Велоспорт', icon: '🚴', category: 'sports' },
-  { id: 'fitness', name: 'Фитнес', icon: '💪', category: 'sports' },
+  { id: 'football', name: 'Футбол', icon: 'circle-dot', category: 'sports' },
+  { id: 'basketball', name: 'Баскетбол', icon: 'circle', category: 'sports' },
+  { id: 'tennis', name: 'Теннис', icon: 'target', category: 'sports' },
+  { id: 'swimming', name: 'Плавание', icon: 'waves', category: 'sports' },
+  { id: 'cycling', name: 'Велоспорт', icon: 'bike', category: 'sports' },
+  { id: 'fitness', name: 'Фитнес', icon: 'dumbbell', category: 'sports' },
 
   // Music
-  { id: 'guitar', name: 'Гитара', icon: '🎸', category: 'music' },
-  { id: 'piano', name: 'Пианино', icon: '🎹', category: 'music' },
-  { id: 'singing', name: 'Вокал', icon: '🎤', category: 'music' },
-  { id: 'dj', name: 'DJ / Электроника', icon: '🎧', category: 'music' },
-  { id: 'classical', name: 'Классическая музыка', icon: '🎻', category: 'music' },
+  { id: 'guitar', name: 'Гитара', icon: 'guitar', category: 'music' },
+  { id: 'piano', name: 'Пианино', icon: 'piano', category: 'music' },
+  { id: 'singing', name: 'Вокал', icon: 'mic', category: 'music' },
+  { id: 'dj', name: 'DJ / Электроника', icon: 'headphones', category: 'music' },
+  { id: 'classical', name: 'Классическая музыка', icon: 'music', category: 'music' },
 
   // Art
-  { id: 'painting', name: 'Живопись', icon: '🎨', category: 'art' },
-  { id: 'photography', name: 'Фотография', icon: '📷', category: 'art' },
-  { id: 'design', name: 'Дизайн', icon: '✏️', category: 'art' },
-  { id: 'sculpture', name: 'Скульптура', icon: '🗿', category: 'art' },
-  { id: 'cinema', name: 'Кино', icon: '🎬', category: 'art' },
+  { id: 'painting', name: 'Живопись', icon: 'palette', category: 'art' },
+  { id: 'photography', name: 'Фотография', icon: 'camera', category: 'art' },
+  { id: 'design', name: 'Дизайн', icon: 'pencil', category: 'art' },
+  { id: 'sculpture', name: 'Скульптура', icon: 'box', category: 'art' },
+  { id: 'cinema', name: 'Кино', icon: 'clapperboard', category: 'art' },
 
   // Gaming
-  { id: 'videogames', name: 'Видеоигры', icon: '🎮', category: 'gaming' },
-  { id: 'boardgames', name: 'Настольные игры', icon: '🎲', category: 'gaming' },
-  { id: 'chess', name: 'Шахматы', icon: '♟️', category: 'gaming' },
-  { id: 'esports', name: 'Киберспорт', icon: '🏆', category: 'gaming' },
+  { id: 'videogames', name: 'Видеоигры', icon: 'gamepad-2', category: 'gaming' },
+  { id: 'boardgames', name: 'Настольные игры', icon: 'dices', category: 'gaming' },
+  { id: 'chess', name: 'Шахматы', icon: 'crown', category: 'gaming' },
+  { id: 'esports', name: 'Киберспорт', icon: 'trophy', category: 'gaming' },
 
   // Science
-  { id: 'astronomy', name: 'Астрономия', icon: '🔭', category: 'science' },
-  { id: 'physics', name: 'Физика', icon: '⚛️', category: 'science' },
-  { id: 'chemistry', name: 'Химия', icon: '🧪', category: 'science' },
-  { id: 'biology', name: 'Биология', icon: '🧬', category: 'science' },
-  { id: 'math', name: 'Математика', icon: '📐', category: 'science' },
+  { id: 'astronomy', name: 'Астрономия', icon: 'telescope', category: 'science' },
+  { id: 'physics', name: 'Физика', icon: 'atom', category: 'science' },
+  { id: 'chemistry', name: 'Химия', icon: 'flask-conical', category: 'science' },
+  { id: 'biology', name: 'Биология', icon: 'dna', category: 'science' },
+  { id: 'math', name: 'Математика', icon: 'ruler', category: 'science' },
 
   // Technology
-  { id: 'programming', name: 'Программирование', icon: '💻', category: 'technology' },
-  { id: 'robotics', name: 'Робототехника', icon: '🤖', category: 'technology' },
-  { id: 'ai', name: 'Искусственный интеллект', icon: '🧠', category: 'technology' },
-  { id: 'gadgets', name: 'Гаджеты', icon: '📱', category: 'technology' },
+  { id: 'programming', name: 'Программирование', icon: 'laptop', category: 'technology' },
+  { id: 'robotics', name: 'Робототехника', icon: 'bot', category: 'technology' },
+  { id: 'ai', name: 'Искусственный интеллект', icon: 'brain', category: 'technology' },
+  { id: 'gadgets', name: 'Гаджеты', icon: 'smartphone', category: 'technology' },
 
   // Nature
-  { id: 'hiking', name: 'Походы', icon: '🥾', category: 'nature' },
-  { id: 'gardening', name: 'Садоводство', icon: '🌱', category: 'nature' },
-  { id: 'animals', name: 'Животные', icon: '🐾', category: 'nature' },
-  { id: 'ecology', name: 'Экология', icon: '🌍', category: 'nature' },
+  { id: 'hiking', name: 'Походы', icon: 'mountain', category: 'nature' },
+  { id: 'gardening', name: 'Садоводство', icon: 'sprout', category: 'nature' },
+  { id: 'animals', name: 'Животные', icon: 'paw-print', category: 'nature' },
+  { id: 'ecology', name: 'Экология', icon: 'globe', category: 'nature' },
 
   // Travel
-  { id: 'travel', name: 'Путешествия', icon: '✈️', category: 'travel' },
-  { id: 'languages', name: 'Иностранные языки', icon: '🗣️', category: 'travel' },
-  { id: 'cultures', name: 'Культуры мира', icon: '🌏', category: 'travel' },
+  { id: 'travel', name: 'Путешествия', icon: 'plane', category: 'travel' },
+  { id: 'languages', name: 'Иностранные языки', icon: 'languages', category: 'travel' },
+  { id: 'cultures', name: 'Культуры мира', icon: 'earth', category: 'travel' },
 
   // Food
-  { id: 'cooking', name: 'Кулинария', icon: '👨‍🍳', category: 'food' },
-  { id: 'baking', name: 'Выпечка', icon: '🥐', category: 'food' },
-  { id: 'coffee', name: 'Кофе', icon: '☕', category: 'food' },
+  { id: 'cooking', name: 'Кулинария', icon: 'chef-hat', category: 'food' },
+  { id: 'baking', name: 'Выпечка', icon: 'croissant', category: 'food' },
+  { id: 'coffee', name: 'Кофе', icon: 'coffee', category: 'food' },
 
   // Books
-  { id: 'fiction', name: 'Художественная литература', icon: '📚', category: 'books' },
-  { id: 'scifi', name: 'Научная фантастика', icon: '🚀', category: 'books' },
-  { id: 'history', name: 'История', icon: '📜', category: 'books' },
-  { id: 'philosophy', name: 'Философия', icon: '💭', category: 'books' },
+  { id: 'fiction', name: 'Художественная литература', icon: 'book-open', category: 'books' },
+  { id: 'scifi', name: 'Научная фантастика', icon: 'rocket', category: 'books' },
+  { id: 'history', name: 'История', icon: 'scroll', category: 'books' },
+  { id: 'philosophy', name: 'Философия', icon: 'message-circle', category: 'books' },
 ];
 
 export const interestCategories: Record<string, string> = {

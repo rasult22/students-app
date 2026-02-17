@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { BookOpen, Clock } from 'lucide-react';
 import { subjects } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
-import { Card, Button } from '../../components/ui';
+import { Card, Button, Icon } from '../../components/ui';
 import { PageTransition } from '../../components/layout';
 import styles from './SubjectsList.module.css';
 
@@ -92,7 +93,9 @@ export function SubjectsList() {
                 >
                   <div className={styles.cardContent}>
                     <div className={styles.iconWrapper}>
-                      <span className={styles.icon}>{subject.icon}</span>
+                      <span className={styles.icon}>
+                        <Icon name={subject.icon} size={32} />
+                      </span>
                       <div
                         className={styles.iconGlow}
                         style={{ background: subject.color }}
@@ -107,11 +110,11 @@ export function SubjectsList() {
 
                       <div className={styles.meta}>
                         <span className={styles.metaItem}>
-                          <span className={styles.metaIcon}>📚</span>
+                          <BookOpen size={14} className={styles.metaIcon} />
                           {subject.sections.length} разделов
                         </span>
                         <span className={styles.metaItem}>
-                          <span className={styles.metaIcon}>⏱️</span>
+                          <Clock size={14} className={styles.metaIcon} />
                           ~{subject.estimatedHours} часов
                         </span>
                       </div>

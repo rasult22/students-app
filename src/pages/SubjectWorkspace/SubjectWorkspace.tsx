@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  LayoutDashboard,
+  Search,
+  ClipboardList,
+  Map,
+} from 'lucide-react';
 import { getSubjectById } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
 import { KnowledgeMap } from '../../components/KnowledgeMap';
 import { DiagnosticTest } from '../../components/DiagnosticTest';
 import { LearningPlan } from '../../components/LearningPlan';
-import { Button, Card } from '../../components/ui';
+import { Button, Card, Icon } from '../../components/ui';
 import { PageTransition } from '../../components/layout';
 import styles from './SubjectWorkspace.module.css';
 
@@ -56,98 +62,27 @@ export function SubjectWorkspace() {
 
   const hasDiagnosticData = studiedTopics > 0;
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'overview', label: 'Обзор', icon: '📊' },
-    { id: 'diagnostic', label: 'Диагностика', icon: '🔍' },
-    { id: 'learning', label: 'Учебный план', icon: '📝' },
-    { id: 'map', label: 'Карта знаний', icon: '🗺️' },
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: 'overview', label: 'Обзор', icon: <LayoutDashboard size={18} /> },
+    { id: 'diagnostic', label: 'Диагностика', icon: <Search size={18} /> },
+    { id: 'learning', label: 'Учебный план', icon: <ClipboardList size={18} /> },
+    { id: 'map', label: 'Карта знаний', icon: <Map size={18} /> },
   ];
+
+  const progressPercent = Math.round((studiedTopics / totalTopics) * 100);
 
   return (
     <PageTransition>
       <div className={styles.container}>
-        {/* Header */}
+        {/* Header - только название курса и прогресс */}
         <header className={styles.header}>
-          <button className={styles.backButton} onClick={() => navigate('/subjects')}>
-            <span>←</span>
-            <span>Назад к предметам</span>
-          </button>
-
-          <div className={styles.headerContent}>
-            <motion.div
-              className={styles.subjectIcon}
-              style={{ '--subject-color': subject.color } as React.CSSProperties}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            >
-              {subject.icon}
-            </motion.div>
-
-            <div className={styles.headerInfo}>
-              <motion.h1
-                className={styles.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                {subject.name}
-              </motion.h1>
-              <motion.p
-                className={styles.description}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                {subject.description}
-              </motion.p>
+          <h1 className={styles.title}>{subject.name}</h1>
+          {hasDiagnosticData && (
+            <div className={styles.headerProgress}>
+              <span className={styles.headerProgressValue}>{progressPercent}%</span>
+              <span className={styles.headerProgressLabel}>изучено</span>
             </div>
-
-            {hasDiagnosticData && (
-              <motion.div
-                className={styles.progressRing}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <svg viewBox="0 0 100 100" className={styles.progressSvg}>
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="var(--color-overlay)"
-                    strokeWidth="8"
-                  />
-                  <motion.circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke={subject.color}
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 45}`}
-                    initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
-                    animate={{
-                      strokeDashoffset:
-                        2 * Math.PI * 45 * (1 - studiedTopics / totalTopics),
-                    }}
-                    transition={{ delay: 0.5, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                    style={{
-                      filter: `drop-shadow(0 0 8px ${subject.color})`,
-                    }}
-                  />
-                </svg>
-                <div className={styles.progressText}>
-                  <span className={styles.progressValue}>
-                    {Math.round((studiedTopics / totalTopics) * 100)}%
-                  </span>
-                  <span className={styles.progressLabel}>изучено</span>
-                </div>
-              </motion.div>
-            )}
-          </div>
+          )}
         </header>
 
         {/* Tabs */}
@@ -160,13 +95,6 @@ export function SubjectWorkspace() {
             >
               <span className={styles.tabIcon}>{tab.icon}</span>
               <span className={styles.tabLabel}>{tab.label}</span>
-              {activeTab === tab.id && (
-                <motion.div
-                  className={styles.tabIndicator}
-                  layoutId="tabIndicator"
-                  style={{ background: subject.color }}
-                />
-              )}
             </button>
           ))}
         </nav>
@@ -182,30 +110,43 @@ export function SubjectWorkspace() {
                 exit={{ opacity: 0, y: -20 }}
                 className={styles.overviewGrid}
               >
-                {/* Quick actions */}
-                <Card variant="glow" padding="lg" className={styles.quickActions}>
-                  <h3 className={styles.cardTitle}>Начните обучение</h3>
-                  <p className={styles.cardDescription}>
-                    {hasDiagnosticData
-                      ? 'Продолжите изучение по персональному плану или пройдите диагностику заново.'
-                      : 'Пройдите диагностику, чтобы мы определили ваш текущий уровень знаний и составили персональный план.'}
-                  </p>
-                  <div className={styles.actionButtons}>
-                    <Button
-                      onClick={() => setActiveTab('diagnostic')}
-                      icon={<span>🔍</span>}
+                {/* Subject info card */}
+                <Card padding="lg" className={styles.subjectInfoCard}>
+                  <div className={styles.subjectHeader}>
+                    <div
+                      className={styles.subjectIcon}
+                      style={{ '--subject-color': subject.color } as React.CSSProperties}
                     >
-                      {hasDiagnosticData ? 'Повторить диагностику' : 'Пройти диагностику'}
-                    </Button>
-                    {hasDiagnosticData && (
+                      <Icon name={subject.icon} size={32} />
+                    </div>
+                    <div className={styles.subjectInfo}>
+                      <p className={styles.subjectDescription}>{subject.description}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.actionSection}>
+                    <p className={styles.actionDescription}>
+                      {hasDiagnosticData
+                        ? 'Продолжите изучение по персональному плану или пройдите диагностику заново.'
+                        : 'Пройдите диагностику, чтобы мы определили ваш текущий уровень знаний и составили персональный план.'}
+                    </p>
+                    <div className={styles.actionButtons}>
                       <Button
-                        variant="secondary"
-                        onClick={() => setActiveTab('learning')}
-                        icon={<span>📝</span>}
+                        onClick={() => setActiveTab('diagnostic')}
+                        icon={<Search size={18} />}
                       >
-                        Продолжить обучение
+                        {hasDiagnosticData ? 'Повторить диагностику' : 'Пройти диагностику'}
                       </Button>
-                    )}
+                      {hasDiagnosticData && (
+                        <Button
+                          variant="secondary"
+                          onClick={() => setActiveTab('learning')}
+                          icon={<ClipboardList size={18} />}
+                        >
+                          Продолжить обучение
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </Card>
 
@@ -221,13 +162,7 @@ export function SubjectWorkspace() {
                       }).length;
 
                       return (
-                        <motion.div
-                          key={section.id}
-                          className={styles.sectionItem}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
+                        <div key={section.id} className={styles.sectionItem}>
                           <div className={styles.sectionNumber}>{index + 1}</div>
                           <div className={styles.sectionInfo}>
                             <h4 className={styles.sectionName}>{section.name}</h4>
@@ -248,30 +183,12 @@ export function SubjectWorkspace() {
                               />
                             </div>
                           )}
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
                 </Card>
 
-                {/* Mini knowledge map */}
-                {hasDiagnosticData && (
-                  <Card padding="none" className={styles.miniMapCard}>
-                    <div className={styles.miniMapHeader}>
-                      <h3 className={styles.cardTitle}>Карта знаний</h3>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setActiveTab('map')}
-                      >
-                        Открыть полностью
-                      </Button>
-                    </div>
-                    <div className={styles.miniMapContainer}>
-                      <KnowledgeMap subject={subject} mini />
-                    </div>
-                  </Card>
-                )}
               </motion.div>
             )}
 

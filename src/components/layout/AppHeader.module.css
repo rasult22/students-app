@@ -25,7 +25,6 @@
 }
 
 .logoIcon {
-  font-size: var(--text-2xl);
   color: var(--color-accent);
   animation: pulse-glow 3s ease-in-out infinite;
 }
@@ -39,6 +38,37 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-overlay);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+}
+
+.backButton:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border-color: var(--color-text-tertiary);
+}
+
+
+.backText {
+  /* Visible by default */
+}
+
+.spacer {
+  flex: 1;
 }
 
 .nav {
@@ -71,9 +101,6 @@
   background: var(--color-accent-ghost);
 }
 
-.navIcon {
-  font-size: var(--text-base);
-}
 
 .profile {
   display: flex;
@@ -112,16 +139,20 @@
     display: none;
   }
 
-  .navLink span:last-child {
+  .backText {
+    display: none;
+  }
+
+  .backButton {
+    padding: var(--space-2);
+  }
+
+  .navLink span {
     display: none;
   }
 
   .navLink {
     padding: var(--space-2);
-  }
-
-  .navIcon {
-    font-size: var(--text-lg);
   }
 
   .userName {
