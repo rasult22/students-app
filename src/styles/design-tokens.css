@@ -1,0 +1,168 @@
+/*
+ * DESIGN SYSTEM: "Constellation"
+ * Aesthetic: Scientific-organic dark theme
+ * Deep space blacks with bioluminescent accents
+ * Typography: Distinctive geometric + humanist pairing
+ */
+
+/* Fonts are imported via JS in globals.css */
+
+:root {
+  /* === COLOR PALETTE === */
+
+  /* Base - Deep space */
+  --color-void: #05070a;
+  --color-abyss: #0a0d12;
+  --color-deep: #0f1318;
+  --color-surface: #161b22;
+  --color-elevated: #1c222b;
+  --color-overlay: #242b36;
+
+  /* Text hierarchy */
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #8b949e;
+  --color-text-tertiary: #6e7681;
+  --color-text-ghost: #484f58;
+
+  /* Accent - Bioluminescent cyan */
+  --color-accent: #00d4aa;
+  --color-accent-bright: #00ffcc;
+  --color-accent-dim: #00a88a;
+  --color-accent-ghost: rgba(0, 212, 170, 0.15);
+  --color-accent-glow: rgba(0, 212, 170, 0.4);
+
+  /* Secondary - Cosmic violet */
+  --color-secondary: #a78bfa;
+  --color-secondary-bright: #c4b5fd;
+  --color-secondary-dim: #7c3aed;
+  --color-secondary-ghost: rgba(167, 139, 250, 0.15);
+
+  /* Tertiary - Solar amber */
+  --color-tertiary: #fbbf24;
+  --color-tertiary-bright: #fcd34d;
+  --color-tertiary-dim: #d97706;
+  --color-tertiary-ghost: rgba(251, 191, 36, 0.15);
+
+  /* Semantic - Knowledge states */
+  --color-mastered: #10b981;
+  --color-learning: #3b82f6;
+  --color-struggling: #f59e0b;
+  --color-unknown: #6b7280;
+  --color-error: #ef4444;
+
+  /* === TYPOGRAPHY === */
+
+  /* Outfit - Geometric sans for headings & UI */
+  --font-display: 'Outfit', system-ui, sans-serif;
+
+  /* Crimson Pro - Elegant serif for body text */
+  --font-body: 'Crimson Pro', Georgia, serif;
+
+  /* JetBrains Mono - Technical/code elements */
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Scale - Musical intervals (minor third) */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.2rem;       /* 19.2px */
+  --text-xl: 1.44rem;      /* 23px */
+  --text-2xl: 1.728rem;    /* 27.6px */
+  --text-3xl: 2.074rem;    /* 33.2px */
+  --text-4xl: 2.488rem;    /* 39.8px */
+  --text-5xl: 2.986rem;    /* 47.8px */
+  --text-6xl: 3.583rem;    /* 57.3px */
+
+  /* Line heights */
+  --leading-none: 1;
+  --leading-tight: 1.2;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* Letter spacing */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+
+  /* === SPACING === */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.5rem;    /* 24px */
+  --space-6: 2rem;      /* 32px */
+  --space-7: 2.5rem;    /* 40px */
+  --space-8: 3rem;      /* 48px */
+  --space-9: 4rem;      /* 64px */
+  --space-10: 5rem;     /* 80px */
+  --space-11: 6rem;     /* 96px */
+  --space-12: 8rem;     /* 128px */
+
+  /* === BORDERS & RADII === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  --border-thin: 1px;
+  --border-medium: 2px;
+  --border-thick: 3px;
+
+  /* === SHADOWS & GLOWS === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+
+  --glow-accent: 0 0 20px var(--color-accent-glow), 0 0 40px rgba(0, 212, 170, 0.2);
+  --glow-accent-intense: 0 0 30px var(--color-accent-glow), 0 0 60px rgba(0, 212, 170, 0.3), 0 0 90px rgba(0, 212, 170, 0.1);
+  --glow-secondary: 0 0 20px rgba(167, 139, 250, 0.4);
+
+  /* === TRANSITIONS === */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out-circ: cubic-bezier(0.85, 0, 0.15, 1);
+
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+
+  /* === Z-INDEX === */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 300;
+  --z-popover: 400;
+  --z-toast: 500;
+
+  /* === GRADIENTS === */
+  --gradient-radial-accent: radial-gradient(ellipse at center, var(--color-accent-ghost) 0%, transparent 70%);
+  --gradient-glow: radial-gradient(circle at 50% 50%, var(--color-accent-ghost) 0%, transparent 50%);
+  --gradient-mesh:
+    radial-gradient(at 40% 20%, rgba(0, 212, 170, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(167, 139, 250, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(0, 212, 170, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(251, 191, 36, 0.08) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(167, 139, 250, 0.08) 0px, transparent 50%);
+}
+
+/* === NOISE TEXTURE === */
+.noise-overlay::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}

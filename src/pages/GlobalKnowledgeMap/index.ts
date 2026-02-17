@@ -1,0 +1,1 @@
+export { GlobalKnowledgeMap } from './GlobalKnowledgeMap';

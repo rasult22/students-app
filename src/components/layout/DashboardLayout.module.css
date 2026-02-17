@@ -1,0 +1,77 @@
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+/* Floating background orbs - more subtle for dashboard */
+.backgroundOrbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.orb1,
+.orb2 {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.3;
+  animation: float-orb 30s ease-in-out infinite;
+}
+
+.orb1 {
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, var(--color-accent-ghost) 0%, transparent 70%);
+  top: -300px;
+  right: -200px;
+  animation-delay: 0s;
+}
+
+.orb2 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--color-secondary-ghost) 0%, transparent 70%);
+  bottom: -200px;
+  left: -150px;
+  animation-delay: -15s;
+}
+
+@keyframes float-orb {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -40px) scale(1.05);
+  }
+  66% {
+    transform: translate(-30px, 30px) scale(0.95);
+  }
+}
+
+/* Grid pattern overlay */
+.layout::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--color-overlay) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-overlay) 1px, transparent 1px);
+  background-size: 80px 80px;
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 0;
+}

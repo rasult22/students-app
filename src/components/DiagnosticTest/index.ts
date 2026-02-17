@@ -1,0 +1,1 @@
+export { DiagnosticTest } from './DiagnosticTest';

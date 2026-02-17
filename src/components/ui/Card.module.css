@@ -1,0 +1,73 @@
+.card {
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Padding variants */
+.padding-none {
+  padding: 0;
+}
+
+.padding-sm {
+  padding: var(--space-4);
+}
+
+.padding-md {
+  padding: var(--space-5);
+}
+
+.padding-lg {
+  padding: var(--space-6);
+}
+
+/* Style variants */
+.default {
+  background: var(--color-surface);
+  border: 1px solid var(--color-overlay);
+}
+
+.elevated {
+  background: var(--color-elevated);
+  box-shadow: var(--shadow-lg);
+}
+
+.outline {
+  background: transparent;
+  border: 2px solid var(--color-overlay);
+}
+
+.glow {
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent);
+  box-shadow: var(--glow-accent);
+}
+
+/* Interactive state */
+.interactive {
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+}
+
+.interactive:hover {
+  border-color: var(--color-accent);
+}
+
+.interactive.default:hover,
+.interactive.elevated:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 20px var(--color-accent-ghost);
+}
+
+/* Gradient border effect for glow variant */
+.glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}

@@ -1,0 +1,247 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+/* Welcome Step */
+.welcomeStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 560px;
+  position: relative;
+}
+
+.starField {
+  position: absolute;
+  inset: -100px;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--color-accent-glow);
+}
+
+.logoLarge {
+  font-size: 5rem;
+  color: var(--color-accent);
+  margin-bottom: var(--space-6);
+  text-shadow: 0 0 60px var(--color-accent-glow);
+  animation: float 6s ease-in-out infinite;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-5xl);
+  font-weight: 800;
+  letter-spacing: var(--tracking-tighter);
+  margin-bottom: var(--space-3);
+}
+
+.subtitle {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-5);
+}
+
+.description {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-8);
+  max-width: 440px;
+}
+
+/* Name Step */
+.nameStep,
+.interestsStep {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 600px;
+}
+
+.stepIndicator {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.stepNumber {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-accent);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-accent-ghost);
+  border-radius: var(--radius-sm);
+}
+
+.stepLabel {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+}
+
+.stepTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-4);
+}
+
+.stepDescription {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-8);
+}
+
+.nameInput {
+  margin-bottom: var(--space-8);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* Interests Step */
+.interestsStep {
+  max-width: 900px;
+}
+
+.selectedCount {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  margin-bottom: var(--space-6);
+}
+
+.count {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.countMax {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  color: var(--color-text-ghost);
+}
+
+.interestsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: var(--space-2);
+}
+
+.categorySection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.categoryTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.interestsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.interestChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-overlay);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+}
+
+.interestChip:hover:not(.disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.interestChip.selected {
+  background: var(--color-accent-ghost);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.interestChip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.interestIcon {
+  font-size: var(--text-base);
+}
+
+.interestName {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-4);
+    align-items: flex-start;
+    padding-top: var(--space-10);
+  }
+
+  .title {
+    font-size: var(--text-4xl);
+  }
+
+  .stepTitle {
+    font-size: var(--text-3xl);
+  }
+
+  .logoLarge {
+    font-size: 4rem;
+  }
+
+  .interestsGrid {
+    max-height: 40vh;
+  }
+}

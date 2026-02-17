@@ -1,0 +1,349 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--space-6);
+  text-align: center;
+}
+
+/* Header */
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-5);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.backButton:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+}
+
+.headerContent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+.subjectIcon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--subject-color);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--subject-color) 30%, transparent);
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-2);
+}
+
+.description {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.progressRing {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+
+.progressSvg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.progressText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.progressValue {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.progressLabel {
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-6);
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+}
+
+.activeTab {
+  color: var(--color-text-primary);
+}
+
+.tabIcon {
+  font-size: var(--text-base);
+}
+
+.tabIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  border-radius: var(--radius-full);
+}
+
+/* Content */
+.content {
+  min-height: 500px;
+}
+
+/* Overview Grid */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+.quickActions {
+  grid-column: 1 / -1;
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.cardDescription {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-5);
+}
+
+.actionButtons {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* Sections Card */
+.sectionsCard {
+  grid-column: 1;
+}
+
+.sectionsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-deep);
+  border-radius: var(--radius-md);
+  transition: background var(--duration-fast);
+}
+
+.sectionItem:hover {
+  background: var(--color-overlay);
+}
+
+.sectionNumber {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+
+.sectionInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.sectionName {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 500;
+  margin-bottom: var(--space-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sectionMeta {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+.sectionProgress {
+  width: 60px;
+  height: 4px;
+  background: var(--color-overlay);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.sectionProgressBar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-slow) var(--ease-out-expo);
+}
+
+/* Mini Map Card */
+.miniMapCard {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.miniMapHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--color-overlay);
+}
+
+.miniMapHeader .cardTitle {
+  margin-bottom: 0;
+}
+
+.miniMapContainer {
+  flex: 1;
+  min-height: 300px;
+}
+
+/* Full Map Container */
+.fullMapContainer {
+  height: calc(100vh - 300px);
+  min-height: 500px;
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionsCard,
+  .miniMapCard {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-4);
+  }
+
+  .headerContent {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .title {
+    font-size: var(--text-3xl);
+  }
+
+  .tabs {
+    overflow-x: auto;
+  }
+
+  .tabLabel {
+    display: none;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+}
