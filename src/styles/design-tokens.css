@@ -55,8 +55,8 @@
   /* Outfit - Geometric sans for headings & UI */
   --font-display: 'Outfit', system-ui, sans-serif;
 
-  /* Crimson Pro - Elegant serif for body text */
-  --font-body: 'Crimson Pro', Georgia, serif;
+  /* Roboto - Clean sans-serif with Cyrillic support for body text */
+  --font-body: 'Roboto', Arial, sans-serif;
 
   /* JetBrains Mono - Technical/code elements */
   --font-mono: 'JetBrains Mono', monospace;

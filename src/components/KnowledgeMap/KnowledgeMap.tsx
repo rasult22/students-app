@@ -1,6 +1,5 @@
-import { useRef, useMemo } from 'react';
-// @ts-expect-error - no types available
-import CytoscapeComponent from 'react-cytoscapejs';
+import { useRef, useMemo, useEffect } from 'react';
+import cytoscape from 'cytoscape';
 import type { Core, LayoutOptions, ElementDefinition } from 'cytoscape';
 import type { Subject } from '../../types';
 import { useAppStore } from '../../stores/appStore';
@@ -12,6 +11,7 @@ interface KnowledgeMapProps {
 }
 
 export function KnowledgeMap({ subject, mini = false }: KnowledgeMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const { knowledgeStates } = useAppStore();
 
@@ -132,7 +132,6 @@ export function KnowledgeMap({ subject, mini = false }: KnowledgeMapProps) {
         'text-max-width': mini ? 60 : 100,
         width: mini ? 50 : 80,
         height: mini ? 50 : 80,
-        'box-shadow': '0 0 20px ' + subject.color,
       },
     },
     // Section nodes
@@ -218,11 +217,10 @@ export function KnowledgeMap({ subject, mini = false }: KnowledgeMapProps) {
     },
   ];
 
-  // Layout configuration
+  // Layout configuration - use cose without animation to avoid notify error
   const layout: LayoutOptions = {
     name: 'cose',
-    animate: !mini,
-    animationDuration: 800,
+    animate: false,
     fit: true,
     padding: mini ? 20 : 50,
     nodeRepulsion: () => mini ? 3000 : 8000,
@@ -233,8 +231,33 @@ export function KnowledgeMap({ subject, mini = false }: KnowledgeMapProps) {
     randomize: false,
   };
 
-  const handleCyInit = (cy: Core) => {
+  // Initialize Cytoscape manually
+  useEffect(() => {
+    if (!containerRef.current || elements.length === 0) return;
+
+    // Destroy previous instance
+    if (cyRef.current) {
+      cyRef.current.destroy();
+      cyRef.current = null;
+    }
+
+    // Create new instance without layout in constructor
+    const cy = cytoscape({
+      container: containerRef.current,
+      elements: elements,
+      style: stylesheet as cytoscape.Stylesheet[],
+      wheelSensitivity: 0.3,
+      boxSelectionEnabled: false,
+      autounselectify: true,
+      userPanningEnabled: !mini,
+      userZoomingEnabled: !mini,
+    });
+
     cyRef.current = cy;
+
+    // Run layout separately
+    const layoutInstance = cy.layout(layout);
+    layoutInstance.run();
 
     // Add hover effects
     cy.on('mouseover', 'node', (e) => {
@@ -249,24 +272,17 @@ export function KnowledgeMap({ subject, mini = false }: KnowledgeMapProps) {
       node.connectedEdges().style('opacity', 0.6);
     });
 
-    // Center and fit
-    cy.fit(undefined, mini ? 20 : 50);
-  };
+    return () => {
+      if (cyRef.current) {
+        cyRef.current.destroy();
+        cyRef.current = null;
+      }
+    };
+  }, [elements, stylesheet, layout, mini]);
 
   return (
     <div className={`${styles.container} ${mini ? styles.mini : ''}`}>
-      <CytoscapeComponent
-        elements={elements}
-        stylesheet={stylesheet}
-        layout={layout}
-        cy={handleCyInit}
-        className={styles.cytoscape}
-        wheelSensitivity={0.3}
-        boxSelectionEnabled={false}
-        autounselectify={true}
-        userPanningEnabled={!mini}
-        userZoomingEnabled={!mini}
-      />
+      <div ref={containerRef} className={styles.cytoscape} />
 
       {/* Legend */}
       {!mini && (

@@ -1,6 +1,5 @@
-import { useRef, useMemo } from 'react';
-// @ts-expect-error - no types available
-import CytoscapeComponent from 'react-cytoscapejs';
+import { useRef, useMemo, useEffect, useCallback } from 'react';
+import cytoscape from 'cytoscape';
 import type { Core, LayoutOptions, ElementDefinition } from 'cytoscape';
 import { motion } from 'framer-motion';
 import { subjects } from '../../data/subjects';
@@ -10,6 +9,7 @@ import { Card } from '../../components/ui';
 import styles from './GlobalKnowledgeMap.module.css';
 
 export function GlobalKnowledgeMap() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const { knowledgeStates, user } = useAppStore();
 
@@ -167,7 +167,6 @@ export function GlobalKnowledgeMap() {
         'text-halign': 'center',
         width: 100,
         height: 100,
-        'box-shadow': '0 0 40px rgba(0, 212, 170, 0.5)',
       },
     },
     // Subject nodes
@@ -242,17 +241,58 @@ export function GlobalKnowledgeMap() {
     },
   ];
 
-  const layout: LayoutOptions = {
-    name: 'cose',
-    animate: true,
-    animationDuration: 1000,
+  const layout: LayoutOptions = useMemo(() => ({
+    name: 'concentric',
     fit: true,
-    padding: 80,
-    nodeRepulsion: () => 10000,
-    idealEdgeLength: () => 120,
-    gravity: 0.2,
-    numIter: 1500,
-  };
+    padding: 50,
+    startAngle: 3 / 2 * Math.PI,
+    sweep: undefined,
+    clockwise: true,
+    equidistant: false,
+    minNodeSpacing: 50,
+    avoidOverlap: true,
+    concentric: (node: cytoscape.NodeSingular) => {
+      const type = node.data('type');
+      if (type === 'center') return 3;
+      if (type === 'subject') return 2;
+      return 1;
+    },
+    levelWidth: () => 1,
+  }), []);
+
+  // Initialize Cytoscape manually to avoid react-cytoscapejs issues
+  useEffect(() => {
+    if (!containerRef.current || elements.length === 0) return;
+
+    // Destroy previous instance if exists
+    if (cyRef.current) {
+      cyRef.current.destroy();
+      cyRef.current = null;
+    }
+
+    // Create new Cytoscape instance without layout
+    const cy = cytoscape({
+      container: containerRef.current,
+      elements: elements,
+      style: stylesheet as cytoscape.Stylesheet[],
+      wheelSensitivity: 0.3,
+      boxSelectionEnabled: false,
+      autounselectify: true,
+    });
+
+    cyRef.current = cy;
+
+    // Run layout after instance is ready
+    const layoutInstance = cy.layout(layout);
+    layoutInstance.run();
+
+    return () => {
+      if (cyRef.current) {
+        cyRef.current.destroy();
+        cyRef.current = null;
+      }
+    };
+  }, [elements, stylesheet, layout]);
 
   return (
     <PageTransition>
@@ -307,19 +347,7 @@ export function GlobalKnowledgeMap() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          <CytoscapeComponent
-            elements={elements}
-            stylesheet={stylesheet}
-            layout={layout}
-            cy={(cy: Core) => {
-              cyRef.current = cy;
-              cy.fit(undefined, 80);
-            }}
-            className={styles.cytoscape}
-            wheelSensitivity={0.3}
-            boxSelectionEnabled={false}
-            autounselectify={true}
-          />
+          <div ref={containerRef} className={styles.cytoscape} />
 
           {/* Legend */}
           <div className={styles.legend}>

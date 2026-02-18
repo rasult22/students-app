@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fontsource/crimson-pro": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/outfit": "^5.2.8",
+    "@fontsource/roboto": "^5.2.9",
     "@types/cytoscape": "^3.21.9",
     "cytoscape": "^3.33.1",
     "framer-motion": "^12.34.0",
