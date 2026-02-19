@@ -13,7 +13,7 @@ import {
   RotateCcw,
   Clock,
 } from 'lucide-react';
-import type { TopicLesson as TopicLessonType, Topic, ReviewQuality, Flashcard } from '../../types';
+import type { TopicLesson as TopicLessonType, Topic, ReviewQuality } from '../../types';
 import { Button, MathText, MarkdownMath } from '../ui';
 import { useAppStore } from '../../stores/appStore';
 import {
@@ -318,7 +318,6 @@ function QuizTab({ lesson }: { lesson: TopicLessonType }) {
     <div className={styles.quiz}>
       {questions.map((question, index) => {
         const selectedAnswer = answers[question.id];
-        const correctOption = question.options.find((o) => o.isCorrect);
 
         return (
           <div key={question.id} className={styles.quizQuestion}>
@@ -406,9 +405,9 @@ function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
   // Инициализируем прогресс для всех карточек при загрузке
   useEffect(() => {
     flashcards.forEach((card) => {
-      initializeCardProgress(card.id, topicId);
+      initializeCardProgress(card.id, topicId, lesson.subjectId);
     });
-  }, [flashcards, topicId, initializeCardProgress]);
+  }, [flashcards, topicId, lesson.subjectId, initializeCardProgress]);
 
   // Статистика
   const stats = useMemo(() => {
@@ -563,25 +562,6 @@ function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
 }
 
 // Helper functions
-function parseMarkdown(text: string): string {
-  // Simple markdown parser
-  return text
-    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    .replace(/^\- (.*$)/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(.+)$/gm, (match) => {
-      if (match.startsWith('<')) return match;
-      return `<p>${match}</p>`;
-    })
-    .replace(/<p><\/p>/g, '');
-}
-
 function getSlideTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     intro: 'Введение',

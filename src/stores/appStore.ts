@@ -62,10 +62,12 @@ interface AppState {
   setGenerationProgress: (progress: Partial<GenerationProgress>) => void;
 
   // Flashcard spaced repetition
-  initializeCardProgress: (cardId: string, topicId: string) => FlashcardProgress;
+  initializeCardProgress: (cardId: string, topicId: string, subjectId: string) => FlashcardProgress;
   reviewCard: (cardId: string, quality: ReviewQuality) => void;
   getCardProgress: (cardId: string) => FlashcardProgress | undefined;
   getDueCardsForTopic: (topicId: string) => FlashcardProgress[];
+  getDueCardsForSubject: (subjectId: string) => FlashcardProgress[];
+  getCardsForSubject: (subjectId: string) => FlashcardProgress[];
   getAllDueCards: () => FlashcardProgress[];
 }
 
@@ -270,7 +272,7 @@ export const useAppStore = create<AppState>()(
       },
 
       // Flashcard spaced repetition actions
-      initializeCardProgress: (cardId, topicId) => {
+      initializeCardProgress: (cardId, topicId, subjectId) => {
         const { flashcardProgress } = get();
 
         // Если прогресс уже существует, возвращаем его
@@ -278,7 +280,7 @@ export const useAppStore = create<AppState>()(
           return flashcardProgress[cardId];
         }
 
-        const newProgress = createInitialProgress(cardId, topicId);
+        const newProgress = createInitialProgress(cardId, topicId, subjectId);
         set({
           flashcardProgress: {
             ...flashcardProgress,
@@ -317,6 +319,21 @@ export const useAppStore = create<AppState>()(
           (p) => p.topicId === topicId
         );
         return sortByReviewPriority(getDueCards(topicCards));
+      },
+
+      getDueCardsForSubject: (subjectId) => {
+        const { flashcardProgress } = get();
+        const subjectCards = Object.values(flashcardProgress).filter(
+          (p) => p.subjectId === subjectId
+        );
+        return sortByReviewPriority(getDueCards(subjectCards));
+      },
+
+      getCardsForSubject: (subjectId) => {
+        const { flashcardProgress } = get();
+        return Object.values(flashcardProgress).filter(
+          (p) => p.subjectId === subjectId
+        );
       },
 
       getAllDueCards: () => {

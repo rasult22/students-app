@@ -19,10 +19,15 @@ const DEFAULT_EASE_FACTOR = 2.5;
 /**
  * Создаёт начальный прогресс для новой карточки
  */
-export function createInitialProgress(cardId: string, topicId: string): FlashcardProgress {
+export function createInitialProgress(
+  cardId: string,
+  topicId: string,
+  subjectId: string
+): FlashcardProgress {
   return {
     cardId,
     topicId,
+    subjectId,
     easeFactor: DEFAULT_EASE_FACTOR,
     interval: 0,
     repetitions: 0,

@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import cytoscape from 'cytoscape';
 import type { Core, LayoutOptions, ElementDefinition } from 'cytoscape';
 import { motion } from 'framer-motion';
@@ -274,7 +274,8 @@ export function GlobalKnowledgeMap() {
     const cy = cytoscape({
       container: containerRef.current,
       elements: elements,
-      style: stylesheet as cytoscape.Stylesheet[],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      style: stylesheet as any,
       wheelSensitivity: 0.3,
       boxSelectionEnabled: false,
       autounselectify: true,

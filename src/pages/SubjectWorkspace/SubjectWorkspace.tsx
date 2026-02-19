@@ -6,17 +6,19 @@ import {
   Search,
   ClipboardList,
   Map,
+  RotateCcw,
 } from 'lucide-react';
 import { getSubjectById } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
 import { KnowledgeMap } from '../../components/KnowledgeMap';
 import { DiagnosticTest } from '../../components/DiagnosticTest';
 import { LearningPlan } from '../../components/LearningPlan';
+import { ReviewSession } from '../../components/ReviewSession';
 import { Button, Card, Icon } from '../../components/ui';
 import { PageTransition } from '../../components/layout';
 import styles from './SubjectWorkspace.module.css';
 
-type Tab = 'overview' | 'diagnostic' | 'learning' | 'map';
+type Tab = 'overview' | 'diagnostic' | 'learning' | 'review' | 'map';
 
 export function SubjectWorkspace() {
   const { subjectId } = useParams<{ subjectId: string }>();
@@ -66,6 +68,7 @@ export function SubjectWorkspace() {
     { id: 'overview', label: 'Обзор', icon: <LayoutDashboard size={18} /> },
     { id: 'diagnostic', label: 'Диагностика', icon: <Search size={18} /> },
     { id: 'learning', label: 'Учебный план', icon: <ClipboardList size={18} /> },
+    { id: 'review', label: 'Повторение', icon: <RotateCcw size={18} /> },
     { id: 'map', label: 'Карта знаний', icon: <Map size={18} /> },
   ];
 
@@ -214,6 +217,17 @@ export function SubjectWorkspace() {
                 exit={{ opacity: 0, y: -20 }}
               >
                 <LearningPlan subject={subject} />
+              </motion.div>
+            )}
+
+            {activeTab === 'review' && (
+              <motion.div
+                key="review"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <ReviewSession subject={subject} />
               </motion.div>
             )}
 

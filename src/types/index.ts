@@ -351,6 +351,8 @@ export interface FlashcardProgress {
   cardId: string;
   /** ID топика, к которому относится карточка */
   topicId: string;
+  /** ID предмета, к которому относится карточка */
+  subjectId: string;
   /** Фактор лёгкости (EF) — начинается с 2.5 */
   easeFactor: number;
   /** Текущий интервал повторения в днях */
