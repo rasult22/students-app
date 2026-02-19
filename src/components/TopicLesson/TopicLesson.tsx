@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -11,9 +11,16 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  Clock,
 } from 'lucide-react';
-import type { TopicLesson as TopicLessonType, Topic } from '../../types';
-import { Button } from '../ui';
+import type { TopicLesson as TopicLessonType, Topic, ReviewQuality, Flashcard } from '../../types';
+import { Button, MathText, MarkdownMath } from '../ui';
+import { useAppStore } from '../../stores/appStore';
+import {
+  previewNextInterval,
+  formatInterval,
+  getReviewStats,
+} from '../../services/spacedRepetition';
 import styles from './TopicLesson.module.css';
 
 type TabType = 'theory' | 'presentation' | 'examples' | 'quiz' | 'flashcards';
@@ -101,17 +108,18 @@ function TheoryTab({ lesson }: { lesson: TopicLessonType }) {
 
   return (
     <div className={styles.theoryContent}>
-      <div
-        className={styles.theoryText}
-        dangerouslySetInnerHTML={{ __html: parseMarkdown(theory.content) }}
-      />
+      <MarkdownMath className={styles.theoryText}>
+        {theory.content}
+      </MarkdownMath>
 
       {theory.keyPoints.length > 0 && (
         <div className={styles.keyPoints}>
           <h3 className={styles.keyPointsTitle}>Ключевые тезисы</h3>
           <ul className={styles.keyPointsList}>
             {theory.keyPoints.map((point, index) => (
-              <li key={index}>{point}</li>
+              <li key={index}>
+                <MathText>{point}</MathText>
+              </li>
             ))}
           </ul>
         </div>
@@ -122,7 +130,9 @@ function TheoryTab({ lesson }: { lesson: TopicLessonType }) {
           <h3 className={styles.formulasTitle}>Формулы</h3>
           {theory.formulas.map((formula, index) => (
             <div key={index} className={styles.formulaCard}>
-              <div className={styles.formulaLatex}>{formula.latex}</div>
+              <div className={styles.formulaLatex}>
+                <MathText>{`$${formula.latex}$`}</MathText>
+              </div>
               <p className={styles.formulaDescription}>{formula.description}</p>
             </div>
           ))}
@@ -172,10 +182,9 @@ function PresentationTab({ lesson }: { lesson: TopicLessonType }) {
 
             <h2 className={styles.slideTitle}>{slide.title}</h2>
 
-            <div
-              className={styles.slideContent}
-              dangerouslySetInnerHTML={{ __html: parseMarkdown(slide.content) }}
-            />
+            <MarkdownMath className={styles.slideContent}>
+              {slide.content}
+            </MarkdownMath>
           </motion.div>
         </AnimatePresence>
       </div>
@@ -238,7 +247,9 @@ function ExamplesTab({ lesson }: { lesson: TopicLessonType }) {
 
           <div className={styles.exampleProblem}>
             <div className={styles.problemLabel}>Условие</div>
-            <p className={styles.problemText}>{example.problem}</p>
+            <p className={styles.problemText}>
+              <MathText>{example.problem}</MathText>
+            </p>
           </div>
 
           <div className={styles.exampleSolution}>
@@ -248,8 +259,12 @@ function ExamplesTab({ lesson }: { lesson: TopicLessonType }) {
                 <div key={step.step} className={styles.solutionStep}>
                   <span className={styles.stepNumber}>{step.step}</span>
                   <div className={styles.stepContent}>
-                    <div className={styles.stepAction}>{step.action}</div>
-                    <div className={styles.stepResult}>{step.result}</div>
+                    <div className={styles.stepAction}>
+                      <MathText>{step.action}</MathText>
+                    </div>
+                    <div className={styles.stepResult}>
+                      <MathText>{step.result}</MathText>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -257,7 +272,9 @@ function ExamplesTab({ lesson }: { lesson: TopicLessonType }) {
           </div>
 
           <div className={styles.exampleExplanation}>
-            <p className={styles.explanationText}>{example.explanation}</p>
+            <p className={styles.explanationText}>
+              <MathText>{example.explanation}</MathText>
+            </p>
           </div>
         </div>
       ))}
@@ -369,11 +386,37 @@ function QuizTab({ lesson }: { lesson: TopicLessonType }) {
   );
 }
 
-// Flashcards Tab Component
+// Flashcards Tab Component with Spaced Repetition (Anki-style)
 function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const { flashcards } = lesson;
+  const [sessionComplete, setSessionComplete] = useState(false);
+  const [reviewedCount, setReviewedCount] = useState(0);
+  // Очередь карточек для текущей сессии (ID карточек)
+  const [queue, setQueue] = useState<string[]>(() => lesson.flashcards.map((c) => c.id));
+
+  const { flashcards, topicId } = lesson;
+
+  const {
+    initializeCardProgress,
+    reviewCard,
+    getCardProgress,
+    flashcardProgress,
+  } = useAppStore();
+
+  // Инициализируем прогресс для всех карточек при загрузке
+  useEffect(() => {
+    flashcards.forEach((card) => {
+      initializeCardProgress(card.id, topicId);
+    });
+  }, [flashcards, topicId, initializeCardProgress]);
+
+  // Статистика
+  const stats = useMemo(() => {
+    const progressList = flashcards
+      .map((card) => flashcardProgress[card.id])
+      .filter(Boolean);
+    return getReviewStats(progressList);
+  }, [flashcards, flashcardProgress]);
 
   if (flashcards.length === 0) {
     return (
@@ -385,24 +428,92 @@ function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
     );
   }
 
-  const card = flashcards[currentIndex];
+  // Сессия завершена (очередь пуста)
+  if (sessionComplete || queue.length === 0) {
+    return (
+      <div className={styles.flashcards}>
+        <div className={styles.sessionComplete}>
+          <CheckCircle2 size={64} className={styles.sessionCompleteIcon} />
+          <h3 className={styles.sessionCompleteTitle}>Сессия завершена!</h3>
+          <p className={styles.sessionCompleteText}>
+            Повторено карточек: {reviewedCount}
+          </p>
+          <div className={styles.sessionStats}>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>{stats.mastered}</span>
+              <span className={styles.statLabel}>Освоено</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>{stats.learning}</span>
+              <span className={styles.statLabel}>Изучается</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>{stats.newCards}</span>
+              <span className={styles.statLabel}>Новые</span>
+            </div>
+          </div>
+          <Button
+            onClick={() => {
+              setSessionComplete(false);
+              setQueue(flashcards.map((c) => c.id));
+              setReviewedCount(0);
+              setIsFlipped(false);
+            }}
+          >
+            Начать заново
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  const goToPrev = () => {
+  // Текущая карточка — первая в очереди
+  const currentCardId = queue[0];
+  const card = flashcards.find((c) => c.id === currentCardId)!;
+  const cardProgress = getCardProgress(card.id);
+
+  const handleReview = (quality: ReviewQuality) => {
+    reviewCard(card.id, quality);
     setIsFlipped(false);
+    setReviewedCount((prev) => prev + 1);
+
     setTimeout(() => {
-      setCurrentIndex((prev) => (prev > 0 ? prev - 1 : flashcards.length - 1));
-    }, 150);
+      if (quality === 0) {
+        // "Не знаю" — карточка уходит в конец очереди (покажется снова)
+        setQueue((prev) => [...prev.slice(1), prev[0]]);
+      } else {
+        // Любой другой ответ — карточка выходит из очереди (graduated)
+        setQueue((prev) => prev.slice(1));
+      }
+    }, 200);
   };
 
-  const goToNext = () => {
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev < flashcards.length - 1 ? prev + 1 : 0));
-    }, 150);
-  };
+  // Кнопки оценки: Не знаю, Не помню, Хорошо, Легко
+  const reviewButtons: { quality: ReviewQuality; label: string; color: string }[] = [
+    { quality: 0, label: 'Не знаю', color: 'var(--color-error)' },
+    { quality: 1, label: 'Не помню', color: 'var(--color-struggling)' },
+    { quality: 4, label: 'Хорошо', color: 'var(--color-mastered)' },
+    { quality: 5, label: 'Легко', color: 'var(--color-accent)' },
+  ];
+
+  // Счётчик: сколько осталось в очереди
+  const remainingCount = queue.length;
 
   return (
     <div className={styles.flashcards}>
+      {/* Прогресс */}
+      <div className={styles.flashcardHeader}>
+        <span className={styles.flashcardCounter}>
+          Осталось: {remainingCount}
+        </span>
+        {cardProgress && cardProgress.interval > 0 && (
+          <span className={styles.cardInterval}>
+            <Clock size={14} />
+            {formatInterval(cardProgress.interval)}
+          </span>
+        )}
+      </div>
+
       <div className={styles.flashcardContainer}>
         <div
           className={`${styles.flashcard} ${isFlipped ? styles.flipped : ''}`}
@@ -410,29 +521,43 @@ function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
         >
           <div className={`${styles.flashcardFace} ${styles.flashcardFront}`}>
             <div className={styles.flashcardLabel}>Вопрос</div>
-            <p className={styles.flashcardText}>{card.front}</p>
+            <p className={styles.flashcardText}>
+              <MathText>{card.front}</MathText>
+            </p>
             <span className={styles.flashcardHint}>Нажмите, чтобы перевернуть</span>
           </div>
           <div className={`${styles.flashcardFace} ${styles.flashcardBack}`}>
             <div className={styles.flashcardLabel}>Ответ</div>
-            <p className={styles.flashcardText}>{card.back}</p>
+            <p className={styles.flashcardText}>
+              <MathText>{card.back}</MathText>
+            </p>
           </div>
         </div>
       </div>
 
-      <div className={styles.flashcardNavigation}>
-        <button className={styles.slideNavButton} onClick={goToPrev}>
-          <ChevronLeft size={24} />
-        </button>
-
-        <span className={styles.flashcardCounter}>
-          {currentIndex + 1} / {flashcards.length}
-        </span>
-
-        <button className={styles.slideNavButton} onClick={goToNext}>
-          <ChevronRight size={24} />
-        </button>
-      </div>
+      {/* Кнопки оценки (показываются после переворота) */}
+      {isFlipped && (
+        <div className={styles.reviewButtons}>
+          {reviewButtons.map(({ quality, label, color }) => (
+            <button
+              key={quality}
+              className={styles.reviewButton}
+              style={{ '--button-color': color } as React.CSSProperties}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReview(quality);
+              }}
+            >
+              <span className={styles.reviewButtonLabel}>{label}</span>
+              {cardProgress && (
+                <span className={styles.reviewButtonInterval}>
+                  {formatInterval(previewNextInterval(cardProgress, quality))}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

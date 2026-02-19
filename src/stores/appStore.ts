@@ -9,7 +9,15 @@ import type {
   MasteryLevel,
   TopicLesson,
   GenerationProgress,
+  FlashcardProgress,
+  ReviewQuality,
 } from '../types';
+import {
+  createInitialProgress,
+  processReview,
+  getDueCards,
+  sortByReviewPriority,
+} from '../services/spacedRepetition';
 
 interface AppState {
   // User
@@ -25,6 +33,9 @@ interface AppState {
   // Generated content
   generatedLessons: Record<string, TopicLesson>; // keyed by topicId
   generationProgress: GenerationProgress;
+
+  // Flashcard spaced repetition progress
+  flashcardProgress: Record<string, FlashcardProgress>; // keyed by cardId
 
   // Actions
   setUser: (name: string, interests: Interest[]) => void;
@@ -49,6 +60,13 @@ interface AppState {
   getGeneratedLesson: (topicId: string) => TopicLesson | undefined;
   loadGeneratedLessons: (lessons: TopicLesson[]) => void;
   setGenerationProgress: (progress: Partial<GenerationProgress>) => void;
+
+  // Flashcard spaced repetition
+  initializeCardProgress: (cardId: string, topicId: string) => FlashcardProgress;
+  reviewCard: (cardId: string, quality: ReviewQuality) => void;
+  getCardProgress: (cardId: string) => FlashcardProgress | undefined;
+  getDueCardsForTopic: (topicId: string) => FlashcardProgress[];
+  getAllDueCards: () => FlashcardProgress[];
 }
 
 const calculateMasteryLevel = (score: number, attempts: number): MasteryLevel => {
@@ -69,6 +87,7 @@ export const useAppStore = create<AppState>()(
       diagnosticSession: null,
       generatedLessons: {},
       generationProgress: { status: 'idle' },
+      flashcardProgress: {},
 
       setUser: (name, interests) => {
         const user: UserProfile = {
@@ -249,6 +268,61 @@ export const useAppStore = create<AppState>()(
           },
         });
       },
+
+      // Flashcard spaced repetition actions
+      initializeCardProgress: (cardId, topicId) => {
+        const { flashcardProgress } = get();
+
+        // Если прогресс уже существует, возвращаем его
+        if (flashcardProgress[cardId]) {
+          return flashcardProgress[cardId];
+        }
+
+        const newProgress = createInitialProgress(cardId, topicId);
+        set({
+          flashcardProgress: {
+            ...flashcardProgress,
+            [cardId]: newProgress,
+          },
+        });
+        return newProgress;
+      },
+
+      reviewCard: (cardId, quality) => {
+        const { flashcardProgress } = get();
+        const current = flashcardProgress[cardId];
+
+        if (!current) {
+          console.warn(`No progress found for card ${cardId}`);
+          return;
+        }
+
+        const updated = processReview(current, quality);
+        set({
+          flashcardProgress: {
+            ...flashcardProgress,
+            [cardId]: updated,
+          },
+        });
+      },
+
+      getCardProgress: (cardId) => {
+        const { flashcardProgress } = get();
+        return flashcardProgress[cardId];
+      },
+
+      getDueCardsForTopic: (topicId) => {
+        const { flashcardProgress } = get();
+        const topicCards = Object.values(flashcardProgress).filter(
+          (p) => p.topicId === topicId
+        );
+        return sortByReviewPriority(getDueCards(topicCards));
+      },
+
+      getAllDueCards: () => {
+        const { flashcardProgress } = get();
+        return sortByReviewPriority(getDueCards(Object.values(flashcardProgress)));
+      },
     }),
     {
       name: 'student-app-storage',
@@ -257,6 +331,7 @@ export const useAppStore = create<AppState>()(
         isOnboarded: state.isOnboarded,
         knowledgeStates: state.knowledgeStates,
         generatedLessons: state.generatedLessons,
+        flashcardProgress: state.flashcardProgress,
       }),
     }
   )

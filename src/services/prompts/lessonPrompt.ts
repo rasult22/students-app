@@ -101,9 +101,14 @@ export const LESSON_SYSTEM_PROMPT = `
    - Структурированные данные для визуализации
 
 ФОРМУЛЫ:
+- ОБЯЗАТЕЛЬНО оборачивай формулы в знаки доллара: $формула$ для inline, $$формула$$ для блочных
 - Используй LaTeX синтаксис
 - Экранируй обратные слеши: \\\\frac, \\\\cdot, \\\\times
-- Пример: "\\\\frac{a}{b}" для дроби a/b
+- Примеры:
+  - Inline формула в тексте: "Площадь круга $S = \\\\pi r^2$ зависит от радиуса"
+  - Блочная формула: "$$\\\\int_0^1 x^2 dx = \\\\frac{1}{3}$$"
+  - Матрица: "$\\\\begin{pmatrix} a & b \\\\\\\\ c & d \\\\end{pmatrix}$"
+- В flashcards, theory.content, examples.problem, slides.content — всегда используй $...$ для формул!
 `;
 
 export function buildLessonUserPrompt(

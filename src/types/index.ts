@@ -334,6 +334,63 @@ export interface Flashcard {
   tags?: string[];
 }
 
+// === SPACED REPETITION (SM-2 ALGORITHM) ===
+
+/** Качество ответа при повторении карточки */
+export type ReviewQuality = 0 | 1 | 2 | 3 | 4 | 5;
+// 0 - Полный провал, не вспомнил
+// 1 - Неправильно, но после подсказки вспомнил
+// 2 - Неправильно, но ответ казался знакомым
+// 3 - Правильно, но с большим трудом
+// 4 - Правильно, с небольшим усилием
+// 5 - Идеально, без колебаний
+
+/** Прогресс повторения одной карточки */
+export interface FlashcardProgress {
+  /** ID карточки (flashcard.id) */
+  cardId: string;
+  /** ID топика, к которому относится карточка */
+  topicId: string;
+  /** Фактор лёгкости (EF) — начинается с 2.5 */
+  easeFactor: number;
+  /** Текущий интервал повторения в днях */
+  interval: number;
+  /** Количество успешных повторений подряд */
+  repetitions: number;
+  /** Дата следующего повторения */
+  nextReviewDate: Date;
+  /** Дата последнего повторения */
+  lastReviewDate?: Date;
+  /** История ответов */
+  reviewHistory: ReviewHistoryEntry[];
+}
+
+export interface ReviewHistoryEntry {
+  date: Date;
+  quality: ReviewQuality;
+  interval: number;
+}
+
+/** Сессия повторения карточек */
+export interface FlashcardReviewSession {
+  id: string;
+  topicId: string;
+  startedAt: Date;
+  completedAt?: Date;
+  /** Карточки для текущей сессии */
+  cardIds: string[];
+  /** Текущий индекс карточки */
+  currentIndex: number;
+  /** Результаты сессии */
+  results: ReviewSessionResult[];
+}
+
+export interface ReviewSessionResult {
+  cardId: string;
+  quality: ReviewQuality;
+  reviewedAt: Date;
+}
+
 export interface InfographicBlock {
   type: InfographicType;
   title: string;
