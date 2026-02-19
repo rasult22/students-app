@@ -5,6 +5,7 @@ import { Onboarding } from './pages/Onboarding';
 import { SubjectsList } from './pages/Subjects';
 import { SubjectWorkspace } from './pages/SubjectWorkspace';
 import { GlobalKnowledgeMap } from './pages/GlobalKnowledgeMap';
+import { TopicLessonPage } from './pages/TopicLessonPage';
 import './styles/globals.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -48,6 +49,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SubjectWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/subjects/:subjectId/topic/:topicId"
+            element={
+              <ProtectedRoute>
+                <TopicLessonPage />
               </ProtectedRoute>
             }
           />

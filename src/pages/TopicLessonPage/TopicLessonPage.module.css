@@ -1,0 +1,101 @@
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10);
+  text-align: center;
+  min-height: 60vh;
+}
+
+.notFound h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.notFound p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-5);
+}
+
+.noLesson {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  padding: var(--space-5);
+}
+
+.noLessonContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 400px;
+}
+
+.noLessonIcon {
+  color: var(--color-text-ghost);
+  margin-bottom: var(--space-5);
+}
+
+.noLessonTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.noLessonDescription {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-6);
+}
+
+.noLessonActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* Loading state */
+.loadingIcon {
+  color: var(--color-accent);
+  margin-bottom: var(--space-5);
+}
+
+.progressBar {
+  width: 100%;
+  max-width: 300px;
+  height: 4px;
+  background: var(--color-overlay);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-3);
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+  border-radius: var(--radius-full);
+}
+
+.progressHint {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* Success state */
+.successIcon {
+  color: var(--color-mastered);
+  margin-bottom: var(--space-5);
+}
+
+/* Error state */
+.errorIcon {
+  color: var(--color-error);
+  margin-bottom: var(--space-5);
+}

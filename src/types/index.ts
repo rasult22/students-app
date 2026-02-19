@@ -232,3 +232,137 @@ export interface Certificate {
   score: number;
   grade: 'excellent' | 'good' | 'satisfactory';
 }
+
+// === GENERATED LESSON CONTENT ===
+
+/**
+ * Полный урок по топику, включающий все форматы подачи материала
+ */
+export interface TopicLesson {
+  id: string;
+  topicId: string;
+  subjectId: string;
+
+  /** Теоретический материал */
+  theory: TheoryBlock;
+
+  /** Презентация (слайды) */
+  presentation: PresentationBlock;
+
+  /** Примеры с пошаговым решением */
+  examples: ExampleBlock[];
+
+  /** Тест для закрепления */
+  quiz: QuizBlock;
+
+  /** Anki-карточки для запоминания */
+  flashcards: Flashcard[];
+
+  /** Инфографика (опционально) */
+  infographic?: InfographicBlock;
+
+  /** Дата генерации */
+  generatedAt: Date;
+}
+
+export interface TheoryBlock {
+  /** Основной текст в Markdown */
+  content: string;
+  /** Ключевые тезисы (3-5 штук) */
+  keyPoints: string[];
+  /** Формулы с описаниями */
+  formulas?: FormulaItem[];
+}
+
+export interface FormulaItem {
+  /** Формула в LaTeX формате */
+  latex: string;
+  /** Описание формулы */
+  description: string;
+}
+
+export interface PresentationBlock {
+  /** Слайды презентации (5-8 штук) */
+  slides: PresentationSlide[];
+}
+
+export interface PresentationSlide {
+  id: string;
+  title: string;
+  /** Контент слайда в Markdown */
+  content: string;
+  type: SlideType;
+  /** Заметки для преподавателя */
+  notes?: string;
+}
+
+export type SlideType = 'intro' | 'concept' | 'formula' | 'example' | 'summary';
+
+export interface ExampleBlock {
+  id: string;
+  /** Условие задачи */
+  problem: string;
+  /** Пошаговое решение */
+  solution: SolutionStep[];
+  /** Общее объяснение решения */
+  explanation: string;
+  difficulty: DifficultyLevel;
+}
+
+export interface SolutionStep {
+  step: number;
+  /** Описание действия */
+  action: string;
+  /** Результат шага */
+  result: string;
+  /** Формула в LaTeX (если применимо) */
+  formula?: string;
+}
+
+export interface QuizBlock {
+  /** Вопросы для закрепления (3-5 штук) */
+  questions: QuizQuestion[];
+}
+
+export interface Flashcard {
+  id: string;
+  /** Лицевая сторона (вопрос/термин) */
+  front: string;
+  /** Обратная сторона (ответ/определение) */
+  back: string;
+  /** Теги для категоризации */
+  tags?: string[];
+}
+
+export interface InfographicBlock {
+  type: InfographicType;
+  title: string;
+  data: InfographicData;
+}
+
+export type InfographicType = 'process' | 'comparison' | 'hierarchy' | 'timeline';
+
+export type InfographicData = ProcessData | ComparisonData | HierarchyData;
+
+export interface ProcessData {
+  steps: { label: string; description: string }[];
+}
+
+export interface ComparisonData {
+  items: { name: string; pros: string[]; cons: string[] }[];
+}
+
+export interface HierarchyData {
+  root: string;
+  children: { label: string; children?: string[] }[];
+}
+
+// === GENERATION STATUS ===
+
+export interface GenerationProgress {
+  status: 'idle' | 'generating' | 'completed' | 'error';
+  currentStep?: string;
+  totalSteps?: number;
+  completedSteps?: number;
+  error?: string;
+}

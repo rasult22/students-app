@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Circle, CircleDot, AlertCircle, Clock, Star, BarChart3, Sparkles } from 'lucide-react';
 import type { Subject, Topic, MasteryLevel } from '../../types';
@@ -18,7 +19,12 @@ interface PlanTopic extends Topic {
 }
 
 export function LearningPlan({ subject }: LearningPlanProps) {
+  const navigate = useNavigate();
   const { knowledgeStates, user } = useAppStore();
+
+  const handleStartTopic = (topicId: string) => {
+    navigate(`/subjects/${subject.id}/topic/${topicId}`);
+  };
 
   // Build learning plan based on diagnostic results
   const plan = useMemo(() => {
@@ -177,7 +183,12 @@ export function LearningPlan({ subject }: LearningPlanProps) {
                 </div>
               </div>
 
-              <Button variant="secondary" size="sm" className={styles.topicButton}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className={styles.topicButton}
+                onClick={() => handleStartTopic(topic.id)}
+              >
                 {topic.mastery === 'unknown' ? 'Начать' : 'Продолжить'}
               </Button>
             </motion.div>

@@ -7,6 +7,8 @@ import type {
   DiagnosticSession,
   DiagnosticAnswer,
   MasteryLevel,
+  TopicLesson,
+  GenerationProgress,
 } from '../types';
 
 interface AppState {
@@ -16,8 +18,13 @@ interface AppState {
 
   // Subjects & Learning
   currentSubjectId: string | null;
+  currentTopicId: string | null;
   knowledgeStates: Record<string, KnowledgeState>; // keyed by topicId
   diagnosticSession: DiagnosticSession | null;
+
+  // Generated content
+  generatedLessons: Record<string, TopicLesson>; // keyed by topicId
+  generationProgress: GenerationProgress;
 
   // Actions
   setUser: (name: string, interests: Interest[]) => void;
@@ -25,6 +32,7 @@ interface AppState {
   clearUser: () => void;
 
   setCurrentSubject: (subjectId: string | null) => void;
+  setCurrentTopic: (topicId: string | null) => void;
 
   // Knowledge tracking
   updateKnowledge: (topicId: string, isCorrect: boolean) => void;
@@ -35,6 +43,12 @@ interface AppState {
   startDiagnostic: (subjectId: string) => void;
   submitAnswer: (answer: Omit<DiagnosticAnswer, 'answeredAt'>) => void;
   completeDiagnostic: () => void;
+
+  // Generated content
+  setGeneratedLesson: (topicId: string, lesson: TopicLesson) => void;
+  getGeneratedLesson: (topicId: string) => TopicLesson | undefined;
+  loadGeneratedLessons: (lessons: TopicLesson[]) => void;
+  setGenerationProgress: (progress: Partial<GenerationProgress>) => void;
 }
 
 const calculateMasteryLevel = (score: number, attempts: number): MasteryLevel => {
@@ -50,8 +64,11 @@ export const useAppStore = create<AppState>()(
       user: null,
       isOnboarded: false,
       currentSubjectId: null,
+      currentTopicId: null,
       knowledgeStates: {},
       diagnosticSession: null,
+      generatedLessons: {},
+      generationProgress: { status: 'idle' },
 
       setUser: (name, interests) => {
         const user: UserProfile = {
@@ -81,6 +98,10 @@ export const useAppStore = create<AppState>()(
 
       setCurrentSubject: (subjectId) => {
         set({ currentSubjectId: subjectId });
+      },
+
+      setCurrentTopic: (topicId) => {
+        set({ currentTopicId: topicId });
       },
 
       updateKnowledge: (topicId, isCorrect) => {
@@ -194,6 +215,40 @@ export const useAppStore = create<AppState>()(
           },
         });
       },
+
+      // Generated content actions
+      setGeneratedLesson: (topicId, lesson) => {
+        const { generatedLessons } = get();
+        set({
+          generatedLessons: {
+            ...generatedLessons,
+            [topicId]: lesson,
+          },
+        });
+      },
+
+      getGeneratedLesson: (topicId) => {
+        const { generatedLessons } = get();
+        return generatedLessons[topicId];
+      },
+
+      loadGeneratedLessons: (lessons) => {
+        const lessonsMap: Record<string, TopicLesson> = {};
+        lessons.forEach((lesson) => {
+          lessonsMap[lesson.topicId] = lesson;
+        });
+        set({ generatedLessons: lessonsMap });
+      },
+
+      setGenerationProgress: (progress) => {
+        const { generationProgress } = get();
+        set({
+          generationProgress: {
+            ...generationProgress,
+            ...progress,
+          },
+        });
+      },
     }),
     {
       name: 'student-app-storage',
@@ -201,6 +256,7 @@ export const useAppStore = create<AppState>()(
         user: state.user,
         isOnboarded: state.isOnboarded,
         knowledgeStates: state.knowledgeStates,
+        generatedLessons: state.generatedLessons,
       }),
     }
   )
