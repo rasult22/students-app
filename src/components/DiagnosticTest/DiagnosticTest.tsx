@@ -5,7 +5,7 @@ import type { Subject, DiagnosticQuestion } from '../../types';
 import { getQuestionsForSubject } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
 import { generateDiagnosticQuestions } from '../../services/generators';
-import { Button, Card } from '../ui';
+import { Button, Card, MathText } from '../ui';
 import styles from './DiagnosticTest.module.css';
 
 interface DiagnosticTestProps {
@@ -418,7 +418,9 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
 
             {/* Question */}
             <Card variant="elevated" padding="lg" className={styles.questionCard}>
-              <p className={styles.questionText}>{currentQuestion.text}</p>
+              <p className={styles.questionText}>
+                <MathText>{currentQuestion.text}</MathText>
+              </p>
 
               <div className={styles.optionsGrid}>
                 {currentQuestion.options?.map((option, index) => (
@@ -446,7 +448,9 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
                     <span className={styles.optionLetter}>
                       {String.fromCharCode(65 + index)}
                     </span>
-                    <span className={styles.optionText}>{option.text}</span>
+                    <span className={styles.optionText}>
+                      <MathText>{option.text}</MathText>
+                    </span>
                   </motion.button>
                 ))}
               </div>

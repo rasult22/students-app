@@ -16,6 +16,11 @@ interface MathTextProps {
  * - Автоматическое определение LaTeX команд без $
  */
 export function MathText({ children, className }: MathTextProps) {
+  // Защита от undefined/null
+  if (!children) {
+    return <span className={className}></span>;
+  }
+
   const processedText = autoWrapLatex(children);
   const parts = parseLatex(processedText);
 

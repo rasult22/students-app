@@ -53,6 +53,7 @@ interface AppState {
   // Final test
   currentFinalTest: FinalTestSession | null;
   finalTestHistory: Record<string, FinalTestHistory>; // keyed by subjectId
+  cachedFinalTestQuestions: Record<string, FinalTestQuestion[]>; // keyed by subjectId
 
   // Course Wrapped (personal summary)
   courseWrapped: Record<string, CourseWrapped>; // keyed by subjectId
@@ -109,6 +110,8 @@ interface AppState {
   completeFinalTest: () => FinalTestSession | null;
   getFinalTestHistory: (subjectId: string) => FinalTestHistory | null;
   getCurrentFinalTest: () => FinalTestSession | null;
+  getCachedFinalTestQuestions: (subjectId: string) => FinalTestQuestion[] | null;
+  setCachedFinalTestQuestions: (subjectId: string, questions: FinalTestQuestion[]) => void;
 
   // Course Wrapped
   saveWrapped: (wrapped: CourseWrapped) => void;
@@ -139,6 +142,7 @@ export const useAppStore = create<AppState>()(
       addedToReviewDeck: {},
       currentFinalTest: null,
       finalTestHistory: {},
+      cachedFinalTestQuestions: {},
       courseWrapped: {},
 
       setUser: (name, interests) => {
@@ -595,6 +599,21 @@ export const useAppStore = create<AppState>()(
         return get().currentFinalTest;
       },
 
+      getCachedFinalTestQuestions: (subjectId) => {
+        const { cachedFinalTestQuestions } = get();
+        return cachedFinalTestQuestions[subjectId] || null;
+      },
+
+      setCachedFinalTestQuestions: (subjectId, questions) => {
+        const { cachedFinalTestQuestions } = get();
+        set({
+          cachedFinalTestQuestions: {
+            ...cachedFinalTestQuestions,
+            [subjectId]: questions,
+          },
+        });
+      },
+
       // Course Wrapped actions
       saveWrapped: (wrapped) => {
         const { courseWrapped } = get();
@@ -705,6 +724,7 @@ export const useAppStore = create<AppState>()(
         addedToReviewDeck: state.addedToReviewDeck,
         customSubjects: state.customSubjects,
         finalTestHistory: state.finalTestHistory,
+        cachedFinalTestQuestions: state.cachedFinalTestQuestions,
         courseWrapped: state.courseWrapped,
       }),
     }

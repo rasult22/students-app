@@ -142,22 +142,29 @@ export async function generateFinalTestQuestions(
   );
 
   // Преобразуем и валидируем результат
-  const questions: FinalTestQuestion[] = result.questions.map((q, index) => ({
+  const rawQuestions = Array.isArray(result?.questions) ? result.questions : [];
+
+  const questions: FinalTestQuestion[] = rawQuestions.map((q, index) => ({
     id: `ft-${subject.id}-${index + 1}`,
-    topicId: q.topicId || '',
-    sectionId: q.sectionId || '',
-    text: q.text || '',
+    topicId: q?.topicId || '',
+    sectionId: q?.sectionId || '',
+    text: q?.text || 'Вопрос не загружен',
     type: 'single-choice' as const,
-    options: Array.isArray(q.options)
+    options: Array.isArray(q?.options)
       ? q.options.map((opt, optIndex) => ({
-          id: opt.id || String.fromCharCode(97 + optIndex),
-          text: opt.text || '',
-          isCorrect: Boolean(opt.isCorrect),
+          id: opt?.id || String.fromCharCode(97 + optIndex),
+          text: opt?.text || '',
+          isCorrect: Boolean(opt?.isCorrect),
         }))
-      : [],
-    correctAnswer: q.correctAnswer || 'a',
-    difficulty: q.difficulty || 'intermediate',
-    explanation: q.explanation || '',
+      : [
+          { id: 'a', text: 'Вариант A', isCorrect: true },
+          { id: 'b', text: 'Вариант B', isCorrect: false },
+          { id: 'c', text: 'Вариант C', isCorrect: false },
+          { id: 'd', text: 'Вариант D', isCorrect: false },
+        ],
+    correctAnswer: q?.correctAnswer || 'a',
+    difficulty: q?.difficulty || 'intermediate',
+    explanation: q?.explanation || '',
   }));
 
   return questions;

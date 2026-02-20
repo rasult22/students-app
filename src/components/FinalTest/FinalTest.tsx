@@ -37,9 +37,12 @@ export function FinalTest({ subject, onComplete, onShowWrapped }: FinalTestProps
     answerFinalTestQuestion,
     completeFinalTest,
     getFinalTestHistory,
+    getCachedFinalTestQuestions,
+    setCachedFinalTestQuestions,
   } = useAppStore();
 
   const history = getFinalTestHistory(subject.id);
+  const cachedQuestions = getCachedFinalTestQuestions(subject.id);
   const currentQuestion = questions[currentIndex];
 
   // Получаем имена разделов для отображения
@@ -52,8 +55,17 @@ export function FinalTest({ subject, onComplete, onShowWrapped }: FinalTestProps
   }, [subject.sections]);
 
   const handleStartTest = async () => {
-    setPhase('generating');
     setGenerationError(null);
+
+    // Используем кешированные вопросы если есть
+    if (cachedQuestions && cachedQuestions.length > 0) {
+      setQuestions(cachedQuestions);
+      startFinalTest(subject.id, cachedQuestions);
+      setPhase('testing');
+      return;
+    }
+
+    setPhase('generating');
 
     try {
       const questionCount = getRecommendedQuestionCount(subject);
@@ -62,6 +74,9 @@ export function FinalTest({ subject, onComplete, onShowWrapped }: FinalTestProps
         user?.interests || [],
         questionCount
       );
+
+      // Сохраняем в кеш
+      setCachedFinalTestQuestions(subject.id, generatedQuestions);
 
       setQuestions(generatedQuestions);
       startFinalTest(subject.id, generatedQuestions);
@@ -265,7 +280,7 @@ export function FinalTest({ subject, onComplete, onShowWrapped }: FinalTestProps
 
             <Card variant="elevated" padding="lg" className={styles.questionCard}>
               <div className={styles.questionText}>
-                <MathText text={currentQuestion.text} />
+                <MathText>{currentQuestion.text}</MathText>
               </div>
 
               <div className={styles.optionsGrid}>
@@ -297,7 +312,7 @@ export function FinalTest({ subject, onComplete, onShowWrapped }: FinalTestProps
                     >
                       <span className={styles.optionLetter}>{letter}</span>
                       <span className={styles.optionText}>
-                        <MathText text={option.text} />
+                        <MathText>{option.text}</MathText>
                       </span>
                     </motion.button>
                   );

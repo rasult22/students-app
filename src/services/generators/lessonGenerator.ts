@@ -118,8 +118,8 @@ function normalizeFlashcards(flashcards: Flashcard[], topicId: string): Flashcar
   if (!Array.isArray(flashcards)) return [];
 
   return flashcards.map((fc, index) => ({
-    // Используем topicId в ID карточки чтобы избежать коллизий между темами
-    id: fc.id || `fc-${topicId}-${index + 1}`,
+    // Всегда генерируем уникальный ID с topicId и случайным суффиксом
+    id: `fc-${topicId}-${index + 1}-${Math.random().toString(36).slice(2, 8)}`,
     front: fc.front || '',
     back: fc.back || '',
     tags: Array.isArray(fc.tags) ? fc.tags : undefined,
