@@ -30,14 +30,16 @@ export function ReviewSession({ subject }: ReviewSessionProps) {
 
   const {
     getDueCardsForSubject,
-    getCardsForSubject,
+    getReviewDeckCards,
     generatedLessons,
     reviewCard,
     getCardProgress,
     flashcardProgress,
+    addedToReviewDeck,
+    isCardInReviewDeck,
   } = useAppStore();
 
-  // Собираем все карточки из всех уроков предмета
+  // Собираем все карточки из всех уроков предмета, которые добавлены в колоду
   const allFlashcards = useMemo(() => {
     const cards: (Flashcard & { topicId: string; topicName: string; sectionName: string })[] = [];
 
@@ -46,30 +48,33 @@ export function ReviewSession({ subject }: ReviewSessionProps) {
         const lesson = generatedLessons[topic.id];
         if (lesson?.flashcards) {
           lesson.flashcards.forEach((card) => {
-            cards.push({
-              ...card,
-              topicId: topic.id,
-              topicName: topic.name,
-              sectionName: section.name,
-            });
+            // Добавляем только карточки из колоды
+            if (isCardInReviewDeck(card.id)) {
+              cards.push({
+                ...card,
+                topicId: topic.id,
+                topicName: topic.name,
+                sectionName: section.name,
+              });
+            }
           });
         }
       });
     });
 
     return cards;
-  }, [subject, generatedLessons]);
+  }, [subject, generatedLessons, addedToReviewDeck, isCardInReviewDeck]);
 
-  // Карточки, готовые к повторению
+  // Карточки, готовые к повторению (из колоды)
   const dueCards = useMemo(() => {
     return getDueCardsForSubject(subject.id);
-  }, [subject.id, getDueCardsForSubject, flashcardProgress]);
+  }, [subject.id, getDueCardsForSubject, flashcardProgress, addedToReviewDeck]);
 
-  // Статистика по всем карточкам предмета
+  // Статистика по карточкам в колоде
   const stats = useMemo(() => {
-    const allProgress = getCardsForSubject(subject.id);
-    return getReviewStats(allProgress);
-  }, [subject.id, getCardsForSubject, flashcardProgress]);
+    const deckCards = getReviewDeckCards(subject.id);
+    return getReviewStats(deckCards);
+  }, [subject.id, getReviewDeckCards, flashcardProgress, addedToReviewDeck]);
 
   // Инициализируем очередь при старте или изменении due cards
   useEffect(() => {
@@ -78,16 +83,16 @@ export function ReviewSession({ subject }: ReviewSessionProps) {
     }
   }, [dueCards, sessionComplete]);
 
-  // Нет карточек вообще
+  // Нет карточек в колоде
   if (allFlashcards.length === 0) {
     return (
       <div className={styles.emptyState}>
         <div className={styles.emptyIcon}>
           <BookOpen size={48} />
         </div>
-        <h3 className={styles.emptyTitle}>Нет карточек для повторения</h3>
+        <h3 className={styles.emptyTitle}>Колода пуста</h3>
         <p className={styles.emptyDescription}>
-          Изучайте темы в учебном плане — карточки появятся автоматически
+          Изучайте темы и добавляйте карточки в колоду для повторения
         </p>
       </div>
     );
@@ -95,7 +100,7 @@ export function ReviewSession({ subject }: ReviewSessionProps) {
 
   // Нет карточек к повторению — режим "чилл"
   if (dueCards.length === 0 && !sessionComplete && queue.length === 0) {
-    const nextReview = getCardsForSubject(subject.id)
+    const nextReview = getReviewDeckCards(subject.id)
       .filter((p) => p.interval > 0)
       .sort((a, b) => new Date(a.nextReviewDate).getTime() - new Date(b.nextReviewDate).getTime())[0];
 

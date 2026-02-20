@@ -41,6 +41,9 @@ interface AppState {
   // Flashcard spaced repetition progress
   flashcardProgress: Record<string, FlashcardProgress>; // keyed by cardId
 
+  // Карточки, добавленные в колоду для повторения (cardId -> true)
+  addedToReviewDeck: Record<string, boolean>;
+
   // Actions
   setUser: (name: string, interests: Interest[]) => void;
   updateUser: (updates: Partial<UserProfile>) => void;
@@ -51,6 +54,7 @@ interface AppState {
 
   // Knowledge tracking
   updateKnowledge: (topicId: string, isCorrect: boolean) => void;
+  setTopicScore: (topicId: string, correct: number, total: number) => void;
   getTopicMastery: (topicId: string) => MasteryLevel;
   getSectionMastery: (topicIds: string[]) => { level: MasteryLevel; score: number };
 
@@ -73,6 +77,12 @@ interface AppState {
   getDueCardsForSubject: (subjectId: string) => FlashcardProgress[];
   getCardsForSubject: (subjectId: string) => FlashcardProgress[];
   getAllDueCards: () => FlashcardProgress[];
+
+  // Управление колодой карточек для повторения
+  addCardToReviewDeck: (cardId: string, topicId: string, subjectId: string) => void;
+  removeCardFromReviewDeck: (cardId: string) => void;
+  isCardInReviewDeck: (cardId: string) => boolean;
+  getReviewDeckCards: (subjectId: string) => FlashcardProgress[];
 
   // Custom subjects
   addCustomSubject: (subject: Subject) => void;
@@ -100,6 +110,7 @@ export const useAppStore = create<AppState>()(
       generatedLessons: {},
       generationProgress: { status: 'idle' },
       flashcardProgress: {},
+      addedToReviewDeck: {},
 
       setUser: (name, interests) => {
         const user: UserProfile = {
@@ -157,6 +168,29 @@ export const useAppStore = create<AppState>()(
           correctAnswers: newCorrect,
           totalAnswers: newTotal,
           masteryLevel: calculateMasteryLevel(newScore, current.attempts + 1),
+          lastAttemptAt: new Date(),
+        };
+
+        set({
+          knowledgeStates: {
+            ...knowledgeStates,
+            [topicId]: updated,
+          },
+        });
+      },
+
+      // Установить score темы напрямую (заменяет предыдущий результат)
+      setTopicScore: (topicId, correct, total) => {
+        const { knowledgeStates } = get();
+        const newScore = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        const updated: KnowledgeState = {
+          topicId,
+          score: newScore,
+          attempts: 1,
+          correctAnswers: correct,
+          totalAnswers: total,
+          masteryLevel: calculateMasteryLevel(newScore, 1),
           lastAttemptAt: new Date(),
         };
 
@@ -332,9 +366,10 @@ export const useAppStore = create<AppState>()(
       },
 
       getDueCardsForSubject: (subjectId) => {
-        const { flashcardProgress } = get();
+        const { flashcardProgress, addedToReviewDeck } = get();
+        // Только карточки, добавленные в колоду
         const subjectCards = Object.values(flashcardProgress).filter(
-          (p) => p.subjectId === subjectId
+          (p) => p.subjectId === subjectId && addedToReviewDeck[p.cardId]
         );
         return sortByReviewPriority(getDueCards(subjectCards));
       },
@@ -347,8 +382,58 @@ export const useAppStore = create<AppState>()(
       },
 
       getAllDueCards: () => {
-        const { flashcardProgress } = get();
-        return sortByReviewPriority(getDueCards(Object.values(flashcardProgress)));
+        const { flashcardProgress, addedToReviewDeck } = get();
+        // Возвращаем только карточки, добавленные в колоду
+        const addedCards = Object.values(flashcardProgress).filter(
+          (p) => addedToReviewDeck[p.cardId]
+        );
+        return sortByReviewPriority(getDueCards(addedCards));
+      },
+
+      // Добавить карточку в колоду для повторения
+      addCardToReviewDeck: (cardId, topicId, subjectId) => {
+        const { addedToReviewDeck, flashcardProgress } = get();
+
+        // Инициализируем прогресс если его ещё нет
+        let progress = flashcardProgress[cardId];
+        if (!progress) {
+          progress = createInitialProgress(cardId, topicId, subjectId);
+          set({
+            flashcardProgress: {
+              ...flashcardProgress,
+              [cardId]: progress,
+            },
+          });
+        }
+
+        set({
+          addedToReviewDeck: {
+            ...addedToReviewDeck,
+            [cardId]: true,
+          },
+        });
+      },
+
+      // Убрать карточку из колоды
+      removeCardFromReviewDeck: (cardId) => {
+        const { addedToReviewDeck } = get();
+        const updated = { ...addedToReviewDeck };
+        delete updated[cardId];
+        set({ addedToReviewDeck: updated });
+      },
+
+      // Проверить, добавлена ли карточка в колоду
+      isCardInReviewDeck: (cardId) => {
+        const { addedToReviewDeck } = get();
+        return !!addedToReviewDeck[cardId];
+      },
+
+      // Получить карточки из колоды для предмета
+      getReviewDeckCards: (subjectId) => {
+        const { flashcardProgress, addedToReviewDeck } = get();
+        return Object.values(flashcardProgress).filter(
+          (p) => p.subjectId === subjectId && addedToReviewDeck[p.cardId]
+        );
       },
 
       // Custom subjects actions
@@ -383,6 +468,7 @@ export const useAppStore = create<AppState>()(
         knowledgeStates: state.knowledgeStates,
         generatedLessons: state.generatedLessons,
         flashcardProgress: state.flashcardProgress,
+        addedToReviewDeck: state.addedToReviewDeck,
         customSubjects: state.customSubjects,
       }),
     }

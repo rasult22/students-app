@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -11,19 +11,27 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
-  Clock,
+  Trophy,
+  ArrowRight,
+  Check,
 } from 'lucide-react';
-import type { TopicLesson as TopicLessonType, Topic, ReviewQuality } from '../../types';
+import type { TopicLesson as TopicLessonType, Topic } from '../../types';
 import { Button, MathText, MarkdownMath } from '../ui';
 import { useAppStore } from '../../stores/appStore';
-import {
-  previewNextInterval,
-  formatInterval,
-  getReviewStats,
-} from '../../services/spacedRepetition';
 import styles from './TopicLesson.module.css';
 
 type TabType = 'theory' | 'presentation' | 'examples' | 'quiz' | 'flashcards';
+
+// Порядок табов для навигации
+const TAB_ORDER: TabType[] = ['theory', 'presentation', 'examples', 'quiz', 'flashcards'];
+
+// Обязательные табы для завершения урока (тест + просмотр карточек)
+const REQUIRED_TABS: TabType[] = ['quiz', 'flashcards'];
+
+interface TabProgress {
+  viewed: boolean;
+  completed: boolean;
+}
 
 interface TopicLessonProps {
   lesson: TopicLessonType;
@@ -34,14 +42,161 @@ interface TopicLessonProps {
 
 export function TopicLesson({ lesson, topic, sectionName, onBack }: TopicLessonProps) {
   const [activeTab, setActiveTab] = useState<TabType>('theory');
+  const [showCompletion, setShowCompletion] = useState(false);
+
+  // Отслеживание прогресса по табам
+  const [tabProgress, setTabProgress] = useState<Record<TabType, TabProgress>>({
+    theory: { viewed: false, completed: false },
+    presentation: { viewed: false, completed: false },
+    examples: { viewed: false, completed: false },
+    quiz: { viewed: false, completed: false },
+    flashcards: { viewed: false, completed: false },
+  });
+
+  // Результаты теста для обновления knowledge state
+  const [quizResults, setQuizResults] = useState<{ correct: number; total: number } | null>(null);
+
+  const { setTopicScore } = useAppStore();
+
+  // Помечаем таб как просмотренный при переключении
+  useEffect(() => {
+    setTabProgress(prev => ({
+      ...prev,
+      [activeTab]: { ...prev[activeTab], viewed: true }
+    }));
+  }, [activeTab]);
+
+  // Проверяем завершение урока
+  const isLessonComplete = useMemo(() => {
+    return REQUIRED_TABS.every(tab => tabProgress[tab].completed);
+  }, [tabProgress]);
+
+  // Обновляем knowledge state сразу после прохождения теста
+  const [knowledgeUpdated, setKnowledgeUpdated] = useState(false);
+  useEffect(() => {
+    if (quizResults && quizResults.total > 0 && !knowledgeUpdated) {
+      // Устанавливаем score напрямую (заменяет предыдущий результат)
+      setTopicScore(topic.id, quizResults.correct, quizResults.total);
+      setKnowledgeUpdated(true);
+    }
+  }, [quizResults, knowledgeUpdated, setTopicScore, topic.id]);
+
+  // Показываем экран завершения когда все обязательные табы пройдены
+  useEffect(() => {
+    if (isLessonComplete && !showCompletion) {
+      setShowCompletion(true);
+    }
+  }, [isLessonComplete, showCompletion]);
+
+  // Функция для пометки таба как завершённого
+  const markTabCompleted = useCallback((tab: TabType) => {
+    setTabProgress(prev => ({
+      ...prev,
+      [tab]: { ...prev[tab], completed: true }
+    }));
+  }, []);
+
+  // Переход к следующему табу
+  const goToNextTab = useCallback(() => {
+    const currentIndex = TAB_ORDER.indexOf(activeTab);
+    if (currentIndex < TAB_ORDER.length - 1) {
+      setActiveTab(TAB_ORDER[currentIndex + 1]);
+    }
+  }, [activeTab]);
+
+  // Проверка есть ли следующий таб
+  const hasNextTab = TAB_ORDER.indexOf(activeTab) < TAB_ORDER.length - 1;
+  const nextTabName = hasNextTab ? getTabLabel(TAB_ORDER[TAB_ORDER.indexOf(activeTab) + 1]) : '';
+
+  // Подсчёт прогресса
+  const completedCount = Object.values(tabProgress).filter(p => p.completed).length;
+  const progressPercent = Math.round((completedCount / TAB_ORDER.length) * 100);
 
   const tabs = useMemo(() => [
-    { id: 'theory' as const, label: 'Теория', icon: BookOpen },
-    { id: 'presentation' as const, label: 'Презентация', icon: Presentation },
-    { id: 'examples' as const, label: 'Примеры', icon: Layers },
-    { id: 'quiz' as const, label: 'Тест', icon: HelpCircle },
-    { id: 'flashcards' as const, label: 'Карточки', icon: RotateCcw },
+    { id: 'theory' as const, label: 'Теория', icon: BookOpen, required: false },
+    { id: 'presentation' as const, label: 'Презентация', icon: Presentation, required: false },
+    { id: 'examples' as const, label: 'Примеры', icon: Layers, required: false },
+    { id: 'quiz' as const, label: 'Тест', icon: HelpCircle, required: true },
+    { id: 'flashcards' as const, label: 'Карточки', icon: RotateCcw, required: true },
   ], []);
+
+  // Экран завершения урока
+  if (showCompletion) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.completionScreen}>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', duration: 0.5 }}
+            className={styles.completionIcon}
+          >
+            <Trophy size={64} />
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className={styles.completionTitle}
+          >
+            Тема изучена!
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className={styles.completionSubtitle}
+          >
+            {topic.name}
+          </motion.p>
+
+          {quizResults && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className={styles.completionStats}
+            >
+              <div className={styles.completionStat}>
+                <span className={styles.completionStatValue}>
+                  {Math.round((quizResults.correct / quizResults.total) * 100)}%
+                </span>
+                <span className={styles.completionStatLabel}>Результат теста</span>
+              </div>
+              <div className={styles.completionStat}>
+                <span className={styles.completionStatValue}>
+                  {quizResults.correct}/{quizResults.total}
+                </span>
+                <span className={styles.completionStatLabel}>Верных ответов</span>
+              </div>
+            </motion.div>
+          )}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className={styles.completionActions}
+          >
+            <Button onClick={onBack}>
+              Вернуться к разделу
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowCompletion(false);
+                setActiveTab('theory');
+              }}
+            >
+              Повторить урок
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -59,25 +214,39 @@ export function TopicLesson({ lesson, topic, sectionName, onBack }: TopicLessonP
           </div>
 
           <div className={styles.progressIndicator}>
-            <span>{topic.estimatedMinutes} мин</span>
+            <span className={styles.progressSteps}>
+              {completedCount} из {TAB_ORDER.length}
+            </span>
           </div>
         </div>
       </header>
 
       {/* Tabs */}
       <nav className={styles.tabs}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={`${styles.tab} ${activeTab === tab.id ? styles.active : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <span className={styles.tabIcon}>
-              <tab.icon size={16} />
-            </span>
-            <span>{tab.label}</span>
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const progress = tabProgress[tab.id];
+          const isRequired = REQUIRED_TABS.includes(tab.id);
+
+          return (
+            <button
+              key={tab.id}
+              className={`${styles.tab} ${activeTab === tab.id ? styles.active : ''} ${progress.completed ? styles.completed : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className={styles.tabIcon}>
+                {progress.completed ? (
+                  <Check size={16} />
+                ) : (
+                  <tab.icon size={16} />
+                )}
+              </span>
+              <span>{tab.label}</span>
+              {isRequired && !progress.completed && (
+                <span className={styles.requiredBadge}>!</span>
+              )}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Content */}
@@ -89,22 +258,96 @@ export function TopicLesson({ lesson, topic, sectionName, onBack }: TopicLessonP
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
+            className={styles.tabContent}
           >
-            {activeTab === 'theory' && <TheoryTab lesson={lesson} />}
-            {activeTab === 'presentation' && <PresentationTab lesson={lesson} />}
-            {activeTab === 'examples' && <ExamplesTab lesson={lesson} />}
-            {activeTab === 'quiz' && <QuizTab lesson={lesson} />}
-            {activeTab === 'flashcards' && <FlashcardsTab lesson={lesson} />}
+            {activeTab === 'theory' && (
+              <TheoryTab
+                lesson={lesson}
+                onComplete={() => markTabCompleted('theory')}
+                isCompleted={tabProgress.theory.completed}
+              />
+            )}
+            {activeTab === 'presentation' && (
+              <PresentationTab
+                lesson={lesson}
+                onComplete={() => markTabCompleted('presentation')}
+                isCompleted={tabProgress.presentation.completed}
+              />
+            )}
+            {activeTab === 'examples' && (
+              <ExamplesTab
+                lesson={lesson}
+                onComplete={() => markTabCompleted('examples')}
+                isCompleted={tabProgress.examples.completed}
+              />
+            )}
+            {activeTab === 'quiz' && (
+              <QuizTab
+                lesson={lesson}
+                onComplete={(results) => {
+                  setQuizResults(results);
+                  markTabCompleted('quiz');
+                }}
+                isCompleted={tabProgress.quiz.completed}
+              />
+            )}
+            {activeTab === 'flashcards' && (
+              <FlashcardsTab
+                lesson={lesson}
+                onComplete={() => markTabCompleted('flashcards')}
+                isCompleted={tabProgress.flashcards.completed}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
+
+        {/* Кнопка "Далее" */}
+        {hasNextTab && (
+          <div className={styles.nextButtonContainer}>
+            <Button
+              onClick={goToNextTab}
+              className={styles.nextButton}
+            >
+              <span>Далее: {nextTabName}</span>
+              <ArrowRight size={18} />
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
+function getTabLabel(tab: TabType): string {
+  const labels: Record<TabType, string> = {
+    theory: 'Теория',
+    presentation: 'Презентация',
+    examples: 'Примеры',
+    quiz: 'Тест',
+    flashcards: 'Карточки',
+  };
+  return labels[tab];
+}
+
 // Theory Tab Component
-function TheoryTab({ lesson }: { lesson: TopicLessonType }) {
+interface TheoryTabProps {
+  lesson: TopicLessonType;
+  onComplete: () => void;
+  isCompleted: boolean;
+}
+
+function TheoryTab({ lesson, onComplete, isCompleted }: TheoryTabProps) {
   const { theory } = lesson;
+
+  // Автоматически отмечаем как просмотренное через 5 секунд
+  useEffect(() => {
+    if (!isCompleted) {
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isCompleted, onComplete]);
 
   return (
     <div className={styles.theoryContent}>
@@ -138,16 +381,43 @@ function TheoryTab({ lesson }: { lesson: TopicLessonType }) {
           ))}
         </div>
       )}
+
+      {!isCompleted && (
+        <div className={styles.tabCompleteHint}>
+          <Button variant="secondary" onClick={onComplete}>
+            <Check size={16} />
+            Отметить как прочитано
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
 // Presentation Tab Component
-function PresentationTab({ lesson }: { lesson: TopicLessonType }) {
+interface PresentationTabProps {
+  lesson: TopicLessonType;
+  onComplete: () => void;
+  isCompleted: boolean;
+}
+
+function PresentationTab({ lesson, onComplete, isCompleted }: PresentationTabProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = lesson.presentation.slides;
 
+  // Отмечаем как завершённое когда дошли до последнего слайда
+  useEffect(() => {
+    if (!isCompleted && currentSlide === slides.length - 1) {
+      onComplete();
+    }
+  }, [currentSlide, slides.length, isCompleted, onComplete]);
+
   if (slides.length === 0) {
+    // Если нет слайдов, сразу отмечаем как завершённое
+    useEffect(() => {
+      if (!isCompleted) onComplete();
+    }, [isCompleted, onComplete]);
+
     return (
       <div className={styles.emptyState}>
         <Presentation size={48} className={styles.emptyIcon} />
@@ -221,8 +491,26 @@ function PresentationTab({ lesson }: { lesson: TopicLessonType }) {
 }
 
 // Examples Tab Component
-function ExamplesTab({ lesson }: { lesson: TopicLessonType }) {
+interface ExamplesTabProps {
+  lesson: TopicLessonType;
+  onComplete: () => void;
+  isCompleted: boolean;
+}
+
+function ExamplesTab({ lesson, onComplete, isCompleted }: ExamplesTabProps) {
   const { examples } = lesson;
+
+  // Автоматически отмечаем как просмотренное через 5 секунд
+  useEffect(() => {
+    if (!isCompleted && examples.length > 0) {
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else if (!isCompleted && examples.length === 0) {
+      onComplete();
+    }
+  }, [isCompleted, onComplete, examples.length]);
 
   if (examples.length === 0) {
     return (
@@ -278,17 +566,39 @@ function ExamplesTab({ lesson }: { lesson: TopicLessonType }) {
           </div>
         </div>
       ))}
+
+      {!isCompleted && (
+        <div className={styles.tabCompleteHint}>
+          <Button variant="secondary" onClick={onComplete}>
+            <Check size={16} />
+            Отметить как изучено
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
 // Quiz Tab Component
-function QuizTab({ lesson }: { lesson: TopicLessonType }) {
+interface QuizTabProps {
+  lesson: TopicLessonType;
+  onComplete: (results: { correct: number; total: number }) => void;
+  isCompleted: boolean;
+}
+
+function QuizTab({ lesson, onComplete, isCompleted }: QuizTabProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
   const { questions } = lesson.quiz;
 
   if (questions.length === 0) {
+    // Если нет вопросов, отмечаем как завершённое с идеальным результатом
+    useEffect(() => {
+      if (!isCompleted) {
+        onComplete({ correct: 1, total: 1 });
+      }
+    }, [isCompleted, onComplete]);
+
     return (
       <div className={styles.emptyState}>
         <HelpCircle size={48} className={styles.emptyIcon} />
@@ -305,6 +615,18 @@ function QuizTab({ lesson }: { lesson: TopicLessonType }) {
 
   const handleSubmit = () => {
     setShowResults(true);
+
+    // Подсчитываем результаты
+    const correctCount = questions.filter((q) => {
+      const selectedOptionId = answers[q.id];
+      const selectedOption = q.options.find((o) => o.id === selectedOptionId);
+      return selectedOption?.isCorrect;
+    }).length;
+
+    // Отмечаем как завершённое и передаём результаты
+    if (!isCompleted) {
+      onComplete({ correct: correctCount, total: questions.length });
+    }
   };
 
   const handleReset = () => {
@@ -314,8 +636,43 @@ function QuizTab({ lesson }: { lesson: TopicLessonType }) {
 
   const allAnswered = questions.every((q) => answers[q.id]);
 
+  // Подсчёт для отображения результатов
+  const correctCount = showResults
+    ? questions.filter((q) => {
+        const selectedOptionId = answers[q.id];
+        const selectedOption = q.options.find((o) => o.id === selectedOptionId);
+        return selectedOption?.isCorrect;
+      }).length
+    : 0;
+
   return (
     <div className={styles.quiz}>
+      {showResults && (
+        <div className={styles.quizResultsBanner}>
+          <div className={styles.quizResultsIcon}>
+            {correctCount === questions.length ? (
+              <Trophy size={32} />
+            ) : correctCount >= questions.length / 2 ? (
+              <CheckCircle2 size={32} />
+            ) : (
+              <XCircle size={32} />
+            )}
+          </div>
+          <div className={styles.quizResultsText}>
+            <span className={styles.quizResultsScore}>
+              {correctCount} из {questions.length}
+            </span>
+            <span className={styles.quizResultsLabel}>
+              {correctCount === questions.length
+                ? 'Отлично!'
+                : correctCount >= questions.length / 2
+                ? 'Хороший результат!'
+                : 'Попробуйте ещё раз'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {questions.map((question, index) => {
         const selectedAnswer = answers[question.id];
 
@@ -370,7 +727,7 @@ function QuizTab({ lesson }: { lesson: TopicLessonType }) {
         );
       })}
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '2rem' }}>
+      <div className={styles.quizActions}>
         {!showResults ? (
           <Button onClick={handleSubmit} disabled={!allAnswered}>
             Проверить ответы
@@ -385,39 +742,50 @@ function QuizTab({ lesson }: { lesson: TopicLessonType }) {
   );
 }
 
-// Flashcards Tab Component with Spaced Repetition (Anki-style)
-function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [sessionComplete, setSessionComplete] = useState(false);
-  const [reviewedCount, setReviewedCount] = useState(0);
-  // Очередь карточек для текущей сессии (ID карточек)
-  const [queue, setQueue] = useState<string[]>(() => lesson.flashcards.map((c) => c.id));
+// Flashcards Tab Component - Preview mode with "Add to deck" functionality
+interface FlashcardsTabProps {
+  lesson: TopicLessonType;
+  onComplete: () => void;
+  isCompleted: boolean;
+}
 
-  const { flashcards, topicId } = lesson;
+function FlashcardsTab({ lesson, onComplete, isCompleted }: FlashcardsTabProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [viewedAll, setViewedAll] = useState(false);
+
+  const { flashcards, topicId, subjectId } = lesson;
 
   const {
-    initializeCardProgress,
-    reviewCard,
-    getCardProgress,
-    flashcardProgress,
+    addCardToReviewDeck,
+    removeCardFromReviewDeck,
+    isCardInReviewDeck,
   } = useAppStore();
 
-  // Инициализируем прогресс для всех карточек при загрузке
-  useEffect(() => {
-    flashcards.forEach((card) => {
-      initializeCardProgress(card.id, topicId, lesson.subjectId);
-    });
-  }, [flashcards, topicId, lesson.subjectId, initializeCardProgress]);
+  // Подсчёт добавленных карточек
+  const addedCount = useMemo(() => {
+    return flashcards.filter((card) => isCardInReviewDeck(card.id)).length;
+  }, [flashcards, isCardInReviewDeck]);
 
-  // Статистика
-  const stats = useMemo(() => {
-    const progressList = flashcards
-      .map((card) => flashcardProgress[card.id])
-      .filter(Boolean);
-    return getReviewStats(progressList);
-  }, [flashcards, flashcardProgress]);
+  // Отмечаем как просмотренное когда дошли до конца
+  useEffect(() => {
+    if (currentIndex === flashcards.length - 1 && !viewedAll) {
+      setViewedAll(true);
+    }
+  }, [currentIndex, flashcards.length, viewedAll]);
+
+  // Автоматически отмечаем таб как пройденный когда просмотрели все карточки
+  useEffect(() => {
+    if (viewedAll && !isCompleted) {
+      onComplete();
+    }
+  }, [viewedAll, isCompleted, onComplete]);
 
   if (flashcards.length === 0) {
+    useEffect(() => {
+      if (!isCompleted) onComplete();
+    }, [isCompleted, onComplete]);
+
     return (
       <div className={styles.emptyState}>
         <RotateCcw size={48} className={styles.emptyIcon} />
@@ -427,92 +795,73 @@ function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
     );
   }
 
-  // Сессия завершена (очередь пуста)
-  if (sessionComplete || queue.length === 0) {
-    return (
-      <div className={styles.flashcards}>
-        <div className={styles.sessionComplete}>
-          <CheckCircle2 size={64} className={styles.sessionCompleteIcon} />
-          <h3 className={styles.sessionCompleteTitle}>Сессия завершена!</h3>
-          <p className={styles.sessionCompleteText}>
-            Повторено карточек: {reviewedCount}
-          </p>
-          <div className={styles.sessionStats}>
-            <div className={styles.statItem}>
-              <span className={styles.statValue}>{stats.mastered}</span>
-              <span className={styles.statLabel}>Освоено</span>
-            </div>
-            <div className={styles.statItem}>
-              <span className={styles.statValue}>{stats.learning}</span>
-              <span className={styles.statLabel}>Изучается</span>
-            </div>
-            <div className={styles.statItem}>
-              <span className={styles.statValue}>{stats.newCards}</span>
-              <span className={styles.statLabel}>Новые</span>
-            </div>
-          </div>
-          <Button
-            onClick={() => {
-              setSessionComplete(false);
-              setQueue(flashcards.map((c) => c.id));
-              setReviewedCount(0);
-              setIsFlipped(false);
-            }}
-          >
-            Начать заново
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const card = flashcards[currentIndex];
+  const isInDeck = isCardInReviewDeck(card.id);
 
-  // Текущая карточка — первая в очереди
-  const currentCardId = queue[0];
-  const card = flashcards.find((c) => c.id === currentCardId)!;
-  const cardProgress = getCardProgress(card.id);
-
-  const handleReview = (quality: ReviewQuality) => {
-    reviewCard(card.id, quality);
-    setIsFlipped(false);
-    setReviewedCount((prev) => prev + 1);
-
-    setTimeout(() => {
-      if (quality === 0) {
-        // "Не знаю" — карточка уходит в конец очереди (покажется снова)
-        setQueue((prev) => [...prev.slice(1), prev[0]]);
-      } else {
-        // Любой другой ответ — карточка выходит из очереди (graduated)
-        setQueue((prev) => prev.slice(1));
-      }
-    }, 200);
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setIsFlipped(false);
+    }
   };
 
-  // Кнопки оценки: Не знаю, Не помню, Хорошо, Легко
-  const reviewButtons: { quality: ReviewQuality; label: string; color: string }[] = [
-    { quality: 0, label: 'Не знаю', color: 'var(--color-error)' },
-    { quality: 1, label: 'Не помню', color: 'var(--color-struggling)' },
-    { quality: 4, label: 'Хорошо', color: 'var(--color-mastered)' },
-    { quality: 5, label: 'Легко', color: 'var(--color-accent)' },
-  ];
+  const handleNext = () => {
+    if (currentIndex < flashcards.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setIsFlipped(false);
+    }
+  };
 
-  // Счётчик: сколько осталось в очереди
-  const remainingCount = queue.length;
+  const handleToggleDeck = () => {
+    if (isInDeck) {
+      removeCardFromReviewDeck(card.id);
+    } else {
+      addCardToReviewDeck(card.id, topicId, subjectId);
+      // Автоматически переходим к следующей карточке
+      if (currentIndex < flashcards.length - 1) {
+        setTimeout(() => {
+          setCurrentIndex(currentIndex + 1);
+          setIsFlipped(false);
+        }, 300);
+      }
+    }
+  };
+
+  const handleAddAllToDeck = () => {
+    flashcards.forEach((c) => {
+      if (!isCardInReviewDeck(c.id)) {
+        addCardToReviewDeck(c.id, topicId, subjectId);
+      }
+    });
+  };
 
   return (
     <div className={styles.flashcards}>
-      {/* Прогресс */}
-      <div className={styles.flashcardHeader}>
-        <span className={styles.flashcardCounter}>
-          Осталось: {remainingCount}
-        </span>
-        {cardProgress && cardProgress.interval > 0 && (
-          <span className={styles.cardInterval}>
-            <Clock size={14} />
-            {formatInterval(cardProgress.interval)}
-          </span>
-        )}
+      {/* Информационный блок */}
+      <div className={styles.flashcardInfo}>
+        <div className={styles.flashcardInfoIcon}>
+          <RotateCcw size={20} />
+        </div>
+        <div className={styles.flashcardInfoText}>
+          <p>Просмотрите карточки и добавьте нужные в колоду для повторения.</p>
+          <p className={styles.flashcardInfoHint}>
+            Добавленные карточки появятся в разделе «Повторение» предмета.
+          </p>
+        </div>
       </div>
 
+      {/* Счётчик */}
+      <div className={styles.flashcardHeader}>
+        <span className={styles.flashcardCounter}>
+          {currentIndex + 1} / {flashcards.length}
+        </span>
+        <span className={styles.addedCounter}>
+          <CheckCircle2 size={14} />
+          В колоде: {addedCount}
+        </span>
+      </div>
+
+      {/* Карточка */}
       <div className={styles.flashcardContainer}>
         <div
           className={`${styles.flashcard} ${isFlipped ? styles.flipped : ''}`}
@@ -523,7 +872,7 @@ function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
             <p className={styles.flashcardText}>
               <MathText>{card.front}</MathText>
             </p>
-            <span className={styles.flashcardHint}>Нажмите, чтобы перевернуть</span>
+            <span className={styles.flashcardHint}>Нажмите, чтобы увидеть ответ</span>
           </div>
           <div className={`${styles.flashcardFace} ${styles.flashcardBack}`}>
             <div className={styles.flashcardLabel}>Ответ</div>
@@ -534,27 +883,64 @@ function FlashcardsTab({ lesson }: { lesson: TopicLessonType }) {
         </div>
       </div>
 
-      {/* Кнопки оценки (показываются после переворота) */}
-      {isFlipped && (
-        <div className={styles.reviewButtons}>
-          {reviewButtons.map(({ quality, label, color }) => (
+      {/* Кнопка добавления в колоду */}
+      <div className={styles.deckActions}>
+        <button
+          className={`${styles.addToDeckButton} ${isInDeck ? styles.inDeck : ''}`}
+          onClick={handleToggleDeck}
+        >
+          {isInDeck ? (
+            <>
+              <CheckCircle2 size={18} />
+              <span>В колоде</span>
+            </>
+          ) : (
+            <>
+              <RotateCcw size={18} />
+              <span>Добавить в колоду</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Навигация */}
+      <div className={styles.slideNavigation}>
+        <button
+          className={styles.slideNavButton}
+          onClick={handlePrev}
+          disabled={currentIndex === 0}
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        <div className={styles.slideDots}>
+          {flashcards.map((c, index) => (
             <button
-              key={quality}
-              className={styles.reviewButton}
-              style={{ '--button-color': color } as React.CSSProperties}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleReview(quality);
+              key={c.id}
+              className={`${styles.slideDot} ${index === currentIndex ? styles.active : ''} ${isCardInReviewDeck(c.id) ? styles.inDeck : ''}`}
+              onClick={() => {
+                setCurrentIndex(index);
+                setIsFlipped(false);
               }}
-            >
-              <span className={styles.reviewButtonLabel}>{label}</span>
-              {cardProgress && (
-                <span className={styles.reviewButtonInterval}>
-                  {formatInterval(previewNextInterval(cardProgress, quality))}
-                </span>
-              )}
-            </button>
+            />
           ))}
+        </div>
+
+        <button
+          className={styles.slideNavButton}
+          onClick={handleNext}
+          disabled={currentIndex === flashcards.length - 1}
+        >
+          <ChevronRight size={24} />
+        </button>
+      </div>
+
+      {/* Кнопка добавить все */}
+      {addedCount < flashcards.length && (
+        <div className={styles.addAllAction}>
+          <Button variant="secondary" onClick={handleAddAllToDeck}>
+            Добавить все карточки в колоду ({flashcards.length - addedCount})
+          </Button>
         </div>
       )}
     </div>
