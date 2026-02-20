@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../../stores/appStore';
-import { availableInterests, interestCategories } from '../../data/interests';
-import { Button, Input, Icon } from '../../components/ui';
+import { Button, Input } from '../../components/ui';
 import { PageTransition } from '../../components/layout';
-import type { Interest } from '../../types';
 import styles from './Onboarding.module.css';
 
-type Step = 'welcome' | 'name' | 'interests';
+type Step = 'welcome' | 'name';
 
 export function Onboarding() {
   const navigate = useNavigate();
@@ -17,37 +15,17 @@ export function Onboarding() {
 
   const [step, setStep] = useState<Step>('welcome');
   const [name, setName] = useState('');
-  const [selectedInterests, setSelectedInterests] = useState<Interest[]>([]);
   const [nameError, setNameError] = useState('');
 
-  const handleNameSubmit = () => {
+  const handleComplete = () => {
     if (name.trim().length < 2) {
       setNameError('Введите имя (минимум 2 символа)');
       return;
     }
     setNameError('');
-    setStep('interests');
-  };
-
-  const toggleInterest = (interest: Interest) => {
-    setSelectedInterests((prev) => {
-      const exists = prev.find((i) => i.id === interest.id);
-      if (exists) {
-        return prev.filter((i) => i.id !== interest.id);
-      }
-      if (prev.length >= 5) {
-        return prev;
-      }
-      return [...prev, interest];
-    });
-  };
-
-  const handleComplete = () => {
-    setUser(name.trim(), selectedInterests);
+    setUser(name.trim(), []);
     navigate('/subjects');
   };
-
-  const categories = Object.entries(interestCategories);
 
   return (
     <PageTransition>
@@ -162,7 +140,7 @@ export function Onboarding() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Введи своё имя"
                   error={nameError}
-                  onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleComplete()}
                   autoFocus
                 />
               </div>
@@ -171,93 +149,8 @@ export function Onboarding() {
                 <Button variant="ghost" onClick={() => setStep('welcome')}>
                   Назад
                 </Button>
-                <Button onClick={handleNameSubmit} disabled={!name.trim()}>
-                  Продолжить
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 'interests' && (
-            <motion.div
-              key="interests"
-              className={styles.interestsStep}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <div className={styles.stepIndicator}>
-                <span className={styles.stepNumber}>02</span>
-                <span className={styles.stepLabel}>Интересы</span>
-              </div>
-
-              <h2 className={styles.stepTitle}>
-                Привет, <span className="text-gradient">{name}</span>!
-              </h2>
-
-              <p className={styles.stepDescription}>
-                Выбери до 5 интересов. Мы используем их для подбора примеров и
-                создания увлекательных мини-игр.
-              </p>
-
-              <div className={styles.selectedCount}>
-                <span className={styles.count}>{selectedInterests.length}</span>
-                <span className={styles.countMax}>/ 5</span>
-              </div>
-
-              <div className={styles.interestsGrid}>
-                {categories.map(([categoryKey, categoryName], catIndex) => {
-                  const categoryInterests = availableInterests.filter(
-                    (i) => i.category === categoryKey
-                  );
-
-                  return (
-                    <motion.div
-                      key={categoryKey}
-                      className={styles.categorySection}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: catIndex * 0.05, duration: 0.4 }}
-                    >
-                      <h3 className={styles.categoryTitle}>{categoryName}</h3>
-                      <div className={styles.interestsList}>
-                        {categoryInterests.map((interest) => {
-                          const isSelected = selectedInterests.some(
-                            (i) => i.id === interest.id
-                          );
-                          const isDisabled =
-                            !isSelected && selectedInterests.length >= 5;
-
-                          return (
-                            <motion.button
-                              key={interest.id}
-                              className={`${styles.interestChip} ${isSelected ? styles.selected : ''} ${isDisabled ? styles.disabled : ''}`}
-                              onClick={() => !isDisabled && toggleInterest(interest)}
-                              whileHover={{ scale: isDisabled ? 1 : 1.05 }}
-                              whileTap={{ scale: isDisabled ? 1 : 0.95 }}
-                            >
-                              <Icon name={interest.icon} size={16} className={styles.interestIcon} />
-                              <span className={styles.interestName}>
-                                {interest.name}
-                              </span>
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              <div className={styles.actions}>
-                <Button variant="ghost" onClick={() => setStep('name')}>
-                  Назад
-                </Button>
-                <Button onClick={handleComplete}>
-                  {selectedInterests.length > 0
-                    ? 'Начать обучение'
-                    : 'Пропустить'}
+                <Button onClick={handleComplete} disabled={!name.trim()}>
+                  Начать обучение
                 </Button>
               </div>
             </motion.div>

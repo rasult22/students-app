@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Trophy,
   Sparkles,
+  Gamepad2,
 } from 'lucide-react';
 import { getSubjectById } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
@@ -18,11 +19,12 @@ import { LearningPlan } from '../../components/LearningPlan';
 import { ReviewSession } from '../../components/ReviewSession';
 import { FinalTest } from '../../components/FinalTest';
 import { CourseWrapped } from '../../components/CourseWrapped';
+import { MiniGames } from '../../components/MiniGames';
 import { Button, Card, Icon } from '../../components/ui';
 import { PageTransition } from '../../components/layout';
 import styles from './SubjectWorkspace.module.css';
 
-type Tab = 'overview' | 'diagnostic' | 'learning' | 'review' | 'map' | 'final-test';
+type Tab = 'overview' | 'diagnostic' | 'learning' | 'review' | 'map' | 'mini-games' | 'final-test';
 
 export function SubjectWorkspace() {
   const { subjectId } = useParams<{ subjectId: string }>();
@@ -84,6 +86,7 @@ export function SubjectWorkspace() {
     { id: 'diagnostic', label: 'Диагностика', icon: <Search size={18} /> },
     { id: 'learning', label: 'Учебный план', icon: <ClipboardList size={18} /> },
     { id: 'review', label: 'Повторение', icon: <RotateCcw size={18} /> },
+    { id: 'mini-games', label: 'Мини-игры', icon: <Gamepad2 size={18} /> },
     { id: 'map', label: 'Карта знаний', icon: <Map size={18} /> },
     {
       id: 'final-test',
@@ -275,6 +278,17 @@ export function SubjectWorkspace() {
                 exit={{ opacity: 0, y: -20 }}
               >
                 <ReviewSession subject={subject} />
+              </motion.div>
+            )}
+
+            {activeTab === 'mini-games' && (
+              <motion.div
+                key="mini-games"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <MiniGames subject={subject} />
               </motion.div>
             )}
 

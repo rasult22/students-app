@@ -25,7 +25,7 @@ React + TypeScript student learning app built with Vite. Helps students learn su
 
 - `/` - Onboarding (redirects to /subjects if authenticated)
 - `/subjects` - Subject list
-- `/subjects/:subjectId` - Subject workspace (tabs: Overview, Diagnostic, Learning Plan, Review, Knowledge Map)
+- `/subjects/:subjectId` - Subject workspace (tabs: Overview, Diagnostic, Learning Plan, Review, Mini-Games, Knowledge Map, Final Test)
 - `/subjects/:subjectId/topic/:topicId` - Topic lesson page
 - `/knowledge-map` - Global knowledge graph
 - `/create-subject` - Custom subject creation from PDF/URL
@@ -58,6 +58,20 @@ React + TypeScript student learning app built with Vite. Helps students learn su
 ### Review Deck System
 
 Cards must be explicitly added to review deck via `addCardToReviewDeck()`. Only cards in `addedToReviewDeck` map appear in subject-level review sessions. This allows users to selectively choose which flashcards to study.
+
+### Mini-Games System
+
+5 themed mini-games that adapt to any topic (`src/components/MiniGames/`, `src/data/miniGames.ts`):
+
+- **Пенальти** (football-quiz) - Football penalty kicks
+- **Квест героя** (game-quest) - RPG battle with enemies
+- **Режиссёр** (movie-scenes) - Build a movie scene
+- **Кругосветка** (travel-adventure) - Travel map journey
+- **Шеф-повар** (cooking-recipe) - Cooking recipe builder
+
+Flow: User selects game → selects topic → `miniGameGenerator.ts` generates questions adapted to game context → play (3 lives, goal: 5 correct answers).
+
+Questions are generated with game-specific framing (e.g., "penalty kick" language for football, "enemy attack" for RPG).
 
 ### LaTeX Support
 

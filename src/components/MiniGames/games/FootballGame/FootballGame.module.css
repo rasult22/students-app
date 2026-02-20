@@ -1,0 +1,432 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+/* ==================== HEADER ==================== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-4);
+}
+
+.gameTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.icon {
+  font-size: 1.5rem;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.lives {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.heart {
+  color: #ef4444;
+  transition: all 0.3s ease;
+}
+
+.heart.lost {
+  opacity: 0.2;
+  transform: scale(0.8);
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.score svg {
+  color: var(--color-accent);
+}
+
+/* ==================== FOOTBALL FIELD ==================== */
+.field {
+  position: relative;
+  height: 280px;
+  background: linear-gradient(180deg, #1a472a 0%, #2d5a3f 50%, #1a472a 100%);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  margin-bottom: var(--space-5);
+}
+
+/* Field markings */
+.field::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 40%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-bottom: none;
+}
+
+/* Penalty spot */
+.field::after {
+  content: '';
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+}
+
+/* Goal Area */
+.goalArea {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 45%;
+}
+
+.goalPost {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 6px solid white;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.goalNet {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.1) 10px,
+      rgba(255, 255, 255, 0.1) 12px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.1) 10px,
+      rgba(255, 255, 255, 0.1) 12px
+    );
+}
+
+/* Goal zones */
+.goalZones {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+}
+
+.goalZone {
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.goalZone.targeted {
+  background: rgba(0, 212, 170, 0.3);
+  box-shadow: inset 0 0 20px rgba(0, 212, 170, 0.5);
+}
+
+/* Goalkeeper */
+.goalkeeper {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.goalkeeperBody {
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+/* Ball */
+.ball {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  animation: ballBounce 0.5s ease-in-out infinite alternate;
+}
+
+.ballKicking {
+  position: absolute;
+  font-size: 2.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  z-index: 5;
+}
+
+@keyframes ballBounce {
+  from { transform: translateX(-50%) translateY(0); }
+  to { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* Result Overlay */
+.resultOverlay {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-8);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(8px);
+  z-index: 30;
+  min-width: 140px;
+  text-align: center;
+}
+
+.resultOverlay.goal {
+  background: rgba(34, 197, 94, 0.95);
+  color: white;
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.4);
+}
+
+.resultOverlay.saved {
+  background: rgba(239, 68, 68, 0.95);
+  color: white;
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
+}
+
+.resultIcon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.resultText {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ==================== QUESTION AREA ==================== */
+.questionArea {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.questionNumber {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-3);
+}
+
+.questionText {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-6);
+}
+
+/* ==================== ANSWER OPTIONS ==================== */
+.directionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  max-width: 560px;
+  margin: 0 auto var(--space-6);
+}
+
+.directionButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-elevated);
+  border: 2px solid var(--color-overlay);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 72px;
+}
+
+.directionButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-ghost);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 212, 170, 0.15);
+}
+
+.directionButton.selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-ghost);
+  box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.2);
+}
+
+.directionButton.correct {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.directionButton.incorrect {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.directionButton:disabled {
+  cursor: default;
+  transform: none;
+}
+
+.directionLabel {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-overlay);
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  font-size: var(--text-base);
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
+.directionButton.selected .directionLabel {
+  background: var(--color-accent);
+  color: var(--color-void);
+}
+
+.directionButton.correct .directionLabel {
+  background: #22c55e;
+  color: white;
+}
+
+.directionButton.incorrect .directionLabel {
+  background: #ef4444;
+  color: white;
+}
+
+.optionText {
+  flex: 1;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+/* ==================== EXPLANATION ==================== */
+.explanation {
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-xl);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  text-align: center;
+  max-width: 560px;
+  margin: 0 auto var(--space-5);
+}
+
+.explanation.correct {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid #22c55e;
+  color: var(--color-text-primary);
+}
+
+.explanation.incorrect {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  color: var(--color-text-primary);
+}
+
+/* ==================== ACTION BUTTON ==================== */
+.actionButton {
+  display: flex;
+  justify-content: center;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 640px) {
+  .container {
+    padding: 0 var(--space-3);
+  }
+
+  .header {
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .field {
+    height: 200px;
+  }
+
+  .goalArea {
+    width: 80%;
+    height: 50%;
+  }
+
+  .goalkeeperBody {
+    font-size: 2rem;
+  }
+
+  .ball,
+  .ballKicking {
+    font-size: 2rem;
+  }
+
+  .questionArea {
+    padding: var(--space-4);
+  }
+
+  .questionText {
+    font-size: var(--text-base);
+    margin-bottom: var(--space-5);
+  }
+
+  .directionsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .directionButton {
+    min-height: 64px;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .directionLabel {
+    width: 36px;
+    height: 36px;
+  }
+}

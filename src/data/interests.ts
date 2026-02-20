@@ -81,3 +81,15 @@ export const interestCategories: Record<string, string> = {
 export const getInterestsByCategory = (category: string): Interest[] => {
   return availableInterests.filter((i) => i.category === category);
 };
+
+/**
+ * 5 самых популярных интересов для мини-игр
+ * Пользователь выбирает один из них при запуске мини-игры
+ */
+export const popularInterests: Interest[] = [
+  { id: 'football', name: 'Футбол', icon: 'circle-dot', category: 'sports' },
+  { id: 'videogames', name: 'Видеоигры', icon: 'gamepad-2', category: 'gaming' },
+  { id: 'cinema', name: 'Кино', icon: 'clapperboard', category: 'art' },
+  { id: 'travel', name: 'Путешествия', icon: 'plane', category: 'travel' },
+  { id: 'cooking', name: 'Кулинария', icon: 'chef-hat', category: 'food' },
+];

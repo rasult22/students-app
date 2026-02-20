@@ -539,3 +539,65 @@ export interface CourseWrapped {
   generatedAt: Date;
   certificateId?: string;
 }
+
+// === MINI GAMES ===
+
+/** Тип мини-игры */
+export type MiniGameType =
+  | 'football-quiz'      // Футбол: забей гол правильным ответом
+  | 'game-quest'         // Видеоигры: RPG квест с вопросами
+  | 'movie-scenes'       // Кино: собери сцену из фактов
+  | 'travel-adventure'   // Путешествия: путешествие по карте знаний
+  | 'cooking-recipe';    // Кулинария: собери рецепт из ингредиентов-ответов
+
+/** Шаблон мини-игры */
+export interface MiniGameTemplate {
+  id: MiniGameType;
+  name: string;
+  description: string;
+  icon: string;
+  interestId: string;
+  /** Механика игры */
+  mechanics: string;
+  /** Минимум вопросов для игры */
+  minQuestions: number;
+}
+
+/** Вопрос мини-игры (адаптированный под тему) */
+export interface MiniGameQuestion {
+  id: string;
+  /** Вопрос в контексте игры */
+  question: string;
+  /** Варианты ответов */
+  options: string[];
+  /** Индекс правильного ответа */
+  correctIndex: number;
+  /** Объяснение */
+  explanation: string;
+  /** Оригинальный topicId */
+  topicId: string;
+}
+
+/** Сессия мини-игры */
+export interface MiniGameSession {
+  id: string;
+  gameType: MiniGameType;
+  subjectId: string;
+  topicId: string;
+  questions: MiniGameQuestion[];
+  currentIndex: number;
+  score: number;
+  lives: number;
+  maxLives: number;
+  status: 'playing' | 'won' | 'lost';
+  startedAt: Date;
+  completedAt?: Date;
+}
+
+/** Прогресс игрока в мини-играх */
+export interface MiniGameProgress {
+  totalGamesPlayed: number;
+  totalWins: number;
+  favoriteGame: MiniGameType | null;
+  gamesPerType: Record<MiniGameType, number>;
+}
