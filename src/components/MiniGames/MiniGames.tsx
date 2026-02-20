@@ -17,6 +17,7 @@ import { miniGameTemplates } from '../../data/miniGames';
 import { generateMiniGameQuestions } from '../../services/generators';
 import { Button, Icon, MathText } from '../ui';
 import { FootballGame } from './games/FootballGame';
+import { QuestGame } from './games/QuestGame';
 import styles from './MiniGames.module.css';
 
 type Phase = 'selection' | 'loading' | 'playing' | 'results';
@@ -256,8 +257,28 @@ export function MiniGames({ subject }: MiniGamesProps) {
           </motion.div>
         )}
 
+        {/* Playing Screen - Quest Game */}
+        {phase === 'playing' && selectedGame === 'game-quest' && questions.length > 0 && (
+          <motion.div
+            key="playing-quest"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <QuestGame
+              questions={questions}
+              onComplete={(result, stats) => {
+                setFinalStats(stats);
+                setGameResult(result);
+                setPhase('results');
+              }}
+              onExit={handlePlayAgain}
+            />
+          </motion.div>
+        )}
+
         {/* Playing Screen - Generic (for other games) */}
-        {phase === 'playing' && selectedGame !== 'football-quiz' && currentQuestion && (
+        {phase === 'playing' && selectedGame !== 'football-quiz' && selectedGame !== 'game-quest' && currentQuestion && (
           <motion.div
             key="playing"
             initial={{ opacity: 0 }}
