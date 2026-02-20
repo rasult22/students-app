@@ -115,6 +115,7 @@ export function TopicLessonPage() {
         lesson={lesson}
         topic={topic}
         sectionName={section.name}
+        subjectName={subject.name}
         onBack={handleBack}
       />
     );

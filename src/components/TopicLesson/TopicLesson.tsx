@@ -14,16 +14,18 @@ import {
   Trophy,
   ArrowRight,
   Check,
+  Gamepad2,
 } from 'lucide-react';
 import type { TopicLesson as TopicLessonType, Topic } from '../../types';
 import { Button, MathText, MarkdownMath } from '../ui';
 import { useAppStore } from '../../stores/appStore';
+import { TopicMiniGames } from './TopicMiniGames';
 import styles from './TopicLesson.module.css';
 
-type TabType = 'theory' | 'presentation' | 'examples' | 'quiz' | 'flashcards';
+type TabType = 'theory' | 'presentation' | 'examples' | 'minigames' | 'quiz' | 'flashcards';
 
 // Порядок табов для навигации
-const TAB_ORDER: TabType[] = ['theory', 'presentation', 'examples', 'quiz', 'flashcards'];
+const TAB_ORDER: TabType[] = ['theory', 'presentation', 'examples', 'minigames', 'quiz', 'flashcards'];
 
 // Обязательные табы для завершения урока (тест + просмотр карточек)
 const REQUIRED_TABS: TabType[] = ['quiz', 'flashcards'];
@@ -37,10 +39,11 @@ interface TopicLessonProps {
   lesson: TopicLessonType;
   topic: Topic;
   sectionName: string;
+  subjectName?: string;
   onBack: () => void;
 }
 
-export function TopicLesson({ lesson, topic, sectionName, onBack }: TopicLessonProps) {
+export function TopicLesson({ lesson, topic, sectionName, subjectName, onBack }: TopicLessonProps) {
   const [activeTab, setActiveTab] = useState<TabType>('theory');
   const [showCompletion, setShowCompletion] = useState(false);
 
@@ -49,6 +52,7 @@ export function TopicLesson({ lesson, topic, sectionName, onBack }: TopicLessonP
     theory: { viewed: false, completed: false },
     presentation: { viewed: false, completed: false },
     examples: { viewed: false, completed: false },
+    minigames: { viewed: false, completed: false },
     quiz: { viewed: false, completed: false },
     flashcards: { viewed: false, completed: false },
   });
@@ -116,6 +120,7 @@ export function TopicLesson({ lesson, topic, sectionName, onBack }: TopicLessonP
     { id: 'theory' as const, label: 'Теория', icon: BookOpen, required: false },
     { id: 'presentation' as const, label: 'Презентация', icon: Presentation, required: false },
     { id: 'examples' as const, label: 'Примеры', icon: Layers, required: false },
+    { id: 'minigames' as const, label: 'Мини-игры', icon: Gamepad2, required: false },
     { id: 'quiz' as const, label: 'Тест', icon: HelpCircle, required: true },
     { id: 'flashcards' as const, label: 'Карточки', icon: RotateCcw, required: true },
   ], []);
@@ -281,6 +286,15 @@ export function TopicLesson({ lesson, topic, sectionName, onBack }: TopicLessonP
                 isCompleted={tabProgress.examples.completed}
               />
             )}
+            {activeTab === 'minigames' && (
+              <TopicMiniGames
+                topic={topic}
+                sectionName={sectionName}
+                subjectName={subjectName || lesson.subjectId}
+                onComplete={() => markTabCompleted('minigames')}
+                isCompleted={tabProgress.minigames.completed}
+              />
+            )}
             {activeTab === 'quiz' && (
               <QuizTab
                 lesson={lesson}
@@ -323,6 +337,7 @@ function getTabLabel(tab: TabType): string {
     theory: 'Теория',
     presentation: 'Презентация',
     examples: 'Примеры',
+    minigames: 'Мини-игры',
     quiz: 'Тест',
     flashcards: 'Карточки',
   };
