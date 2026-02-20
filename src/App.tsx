@@ -6,6 +6,7 @@ import { SubjectsList } from './pages/Subjects';
 import { SubjectWorkspace } from './pages/SubjectWorkspace';
 import { GlobalKnowledgeMap } from './pages/GlobalKnowledgeMap';
 import { TopicLessonPage } from './pages/TopicLessonPage';
+import { CreateSubject } from './pages/CreateSubject';
 import './styles/globals.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -65,6 +66,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <GlobalKnowledgeMap />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-subject"
+            element={
+              <ProtectedRoute>
+                <CreateSubject />
               </ProtectedRoute>
             }
           />

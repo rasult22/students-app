@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Zap, BarChart3, Target, Check, X, Star, ChevronRight } from 'lucide-react';
+import { Search, Zap, BarChart3, Target, Check, X, Star, ChevronRight, AlertCircle, ClipboardList } from 'lucide-react';
 import type { Subject, DiagnosticQuestion } from '../../types';
 import { getQuestionsForSubject } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
@@ -24,6 +24,10 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
 
   const [phase, setPhase] = useState<'intro' | 'testing' | 'results'>('intro');
   const [allQuestions] = useState(() => getQuestionsForSubject(subject.id));
+
+  // Проверяем есть ли вопросы для этого курса
+  const hasQuestions = allQuestions.length > 0;
+  const isCustomSubject = subject.isCustom === true;
   const [currentQuestion, setCurrentQuestion] = useState<DiagnosticQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -192,6 +196,39 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
       return { section, state, score, level };
     });
   };
+
+  // Если нет вопросов для пользовательского курса - показываем специальный экран
+  if (!hasQuestions && isCustomSubject) {
+    return (
+      <div className={styles.container}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={styles.introScreen}
+        >
+          <div className={styles.introIcon} style={{ background: 'var(--color-tertiary-ghost)' }}>
+            <AlertCircle size={48} style={{ color: 'var(--color-tertiary)' }} />
+          </div>
+          <h2 className={styles.introTitle}>Диагностика недоступна</h2>
+          <p className={styles.introDescription}>
+            Для пользовательских курсов диагностика пока не поддерживается.
+            Вы можете сразу перейти к изучению материала.
+          </p>
+
+          <div className={styles.introFeatures}>
+            <div className={styles.feature}>
+              <ClipboardList size={18} className={styles.featureIcon} />
+              <span>Перейдите к учебному плану</span>
+            </div>
+          </div>
+
+          <Button size="lg" onClick={onComplete}>
+            К учебному плану
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>

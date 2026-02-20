@@ -1,0 +1,130 @@
+.page {
+  min-height: 100vh;
+  padding: var(--space-5);
+  background: var(--color-abyss);
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--space-6);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Title section */
+.titleSection {
+  text-align: center;
+}
+
+.iconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-4);
+  background: var(--gradient-radial-accent);
+  border-radius: var(--radius-xl);
+  color: var(--color-accent);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-3) 0;
+  letter-spacing: var(--tracking-tight);
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 480px;
+  margin-inline: auto;
+  line-height: var(--leading-relaxed);
+}
+
+/* Uploader card */
+.uploaderCard {
+  background: var(--color-deep) !important;
+}
+
+/* Info section */
+.infoSection {
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-overlay);
+}
+
+.infoTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-5) 0;
+  text-align: center;
+}
+
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .infoGrid {
+    flex-direction: row;
+    gap: var(--space-5);
+  }
+}
+
+.infoItem {
+  flex: 1;
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.infoNumber {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--color-accent-ghost);
+  border-radius: var(--radius-full);
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.infoItem strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.infoItem p {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}

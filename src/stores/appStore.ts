@@ -11,6 +11,7 @@ import type {
   GenerationProgress,
   FlashcardProgress,
   ReviewQuality,
+  Subject,
 } from '../types';
 import {
   createInitialProgress,
@@ -29,6 +30,9 @@ interface AppState {
   currentTopicId: string | null;
   knowledgeStates: Record<string, KnowledgeState>; // keyed by topicId
   diagnosticSession: DiagnosticSession | null;
+
+  // Custom subjects (user-created)
+  customSubjects: Subject[];
 
   // Generated content
   generatedLessons: Record<string, TopicLesson>; // keyed by topicId
@@ -69,6 +73,11 @@ interface AppState {
   getDueCardsForSubject: (subjectId: string) => FlashcardProgress[];
   getCardsForSubject: (subjectId: string) => FlashcardProgress[];
   getAllDueCards: () => FlashcardProgress[];
+
+  // Custom subjects
+  addCustomSubject: (subject: Subject) => void;
+  deleteCustomSubject: (subjectId: string) => void;
+  getCustomSubject: (subjectId: string) => Subject | undefined;
 }
 
 const calculateMasteryLevel = (score: number, attempts: number): MasteryLevel => {
@@ -87,6 +96,7 @@ export const useAppStore = create<AppState>()(
       currentTopicId: null,
       knowledgeStates: {},
       diagnosticSession: null,
+      customSubjects: [],
       generatedLessons: {},
       generationProgress: { status: 'idle' },
       flashcardProgress: {},
@@ -340,6 +350,30 @@ export const useAppStore = create<AppState>()(
         const { flashcardProgress } = get();
         return sortByReviewPriority(getDueCards(Object.values(flashcardProgress)));
       },
+
+      // Custom subjects actions
+      addCustomSubject: (subject) => {
+        const { customSubjects } = get();
+        // Помечаем как пользовательский курс
+        const customSubject: Subject = {
+          ...subject,
+          isCustom: true,
+          createdAt: new Date(),
+        };
+        set({ customSubjects: [...customSubjects, customSubject] });
+      },
+
+      deleteCustomSubject: (subjectId) => {
+        const { customSubjects } = get();
+        set({
+          customSubjects: customSubjects.filter((s) => s.id !== subjectId),
+        });
+      },
+
+      getCustomSubject: (subjectId) => {
+        const { customSubjects } = get();
+        return customSubjects.find((s) => s.id === subjectId);
+      },
     }),
     {
       name: 'student-app-storage',
@@ -349,6 +383,7 @@ export const useAppStore = create<AppState>()(
         knowledgeStates: state.knowledgeStates,
         generatedLessons: state.generatedLessons,
         flashcardProgress: state.flashcardProgress,
+        customSubjects: state.customSubjects,
       }),
     }
   )

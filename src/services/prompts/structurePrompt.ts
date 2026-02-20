@@ -67,13 +67,23 @@ export const STRUCTURE_SYSTEM_PROMPT = `
    - Примеры: #00d4aa, #a78bfa, #fbbf24, #f472b6, #60a5fa
 `;
 
+export interface StructurePromptOptions {
+  /** Название курса от пользователя */
+  courseName?: string;
+  /** Подсказка о типе материала */
+  subjectHint?: string;
+}
+
 export function buildStructureUserPrompt(
   rawContent: string,
-  subjectHint?: string
+  options?: StructurePromptOptions
 ): string {
+  const { courseName, subjectHint } = options || {};
+
   return `
 Проанализируй следующий учебный материал и создай структуру курса:
 
+${courseName ? `НАЗВАНИЕ КУРСА (используй это название): ${courseName}` : ''}
 ${subjectHint ? `ПОДСКАЗКА О ПРЕДМЕТЕ: ${subjectHint}` : ''}
 
 УЧЕБНЫЙ МАТЕРИАЛ:
@@ -82,6 +92,7 @@ ${rawContent.slice(0, 15000)}
 ---
 
 На основе этого материала создай структурированный JSON курса.
+${courseName ? `Используй предоставленное название "${courseName}" как имя курса.` : 'Придумай подходящее название курса.'}
 Определи основные разделы и темы, распредели их по сложности.
 `.trim();
 }

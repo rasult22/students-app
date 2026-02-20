@@ -462,8 +462,16 @@ export const diagnosticQuestions: DiagnosticQuestion[] = [
   },
 ];
 
+import { useAppStore } from '../stores/appStore';
+
 export const getSubjectById = (id: string): Subject | undefined => {
-  return subjects.find((s) => s.id === id);
+  // Сначала ищем в предустановленных курсах
+  const defaultSubject = subjects.find((s) => s.id === id);
+  if (defaultSubject) return defaultSubject;
+
+  // Затем ищем в пользовательских курсах
+  const customSubjects = useAppStore.getState().customSubjects;
+  return customSubjects.find((s) => s.id === id);
 };
 
 export const getQuestionsForSection = (sectionId: string): DiagnosticQuestion[] => {

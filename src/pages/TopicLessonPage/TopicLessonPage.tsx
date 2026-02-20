@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TopicLesson } from '../../components/TopicLesson';
 import { useAppStore } from '../../stores/appStore';
-import { subjects } from '../../data/subjects';
+import { getSubjectById } from '../../data/subjects';
 import { generateTopicLesson } from '../../services/generators';
 import { Button } from '../../components/ui';
 import { BookOpen, Sparkles, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -22,7 +22,9 @@ export function TopicLessonPage() {
 
   // Find the topic and its parent section
   const { topic, section, subject } = useMemo(() => {
-    const subject = subjects.find((s) => s.id === subjectId);
+    if (!subjectId) return { topic: null, section: null, subject: null };
+
+    const subject = getSubjectById(subjectId);
     if (!subject) return { topic: null, section: null, subject: null };
 
     for (const section of subject.sections) {

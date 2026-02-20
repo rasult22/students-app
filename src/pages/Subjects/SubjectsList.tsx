@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookOpen, Clock } from 'lucide-react';
-import { subjects } from '../../data/subjects';
+import { BookOpen, Clock, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { subjects as defaultSubjects } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
 import { Card, Button, Icon } from '../../components/ui';
 import { PageTransition } from '../../components/layout';
@@ -9,10 +10,15 @@ import styles from './SubjectsList.module.css';
 
 export function SubjectsList() {
   const navigate = useNavigate();
-  const { user, knowledgeStates } = useAppStore();
+  const { user, knowledgeStates, customSubjects, deleteCustomSubject } = useAppStore();
+
+  // Объединяем предустановленные и пользовательские курсы
+  const allSubjects = useMemo(() => {
+    return [...defaultSubjects, ...customSubjects];
+  }, [customSubjects]);
 
   const getSubjectProgress = (subjectId: string) => {
-    const subject = subjects.find((s) => s.id === subjectId);
+    const subject = allSubjects.find((s) => s.id === subjectId);
     if (!subject) return { score: 0, topicsStudied: 0, totalTopics: 0 };
 
     let totalTopics = 0;
@@ -69,6 +75,20 @@ export function SubjectsList() {
               персональный план обучения.
             </p>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
+            <Button
+              variant="primary"
+              icon={<Plus size={18} />}
+              onClick={() => navigate('/create-subject')}
+            >
+              Создать курс
+            </Button>
+          </motion.div>
         </header>
 
         <motion.div
@@ -77,7 +97,7 @@ export function SubjectsList() {
           initial="hidden"
           animate="show"
         >
-          {subjects.map((subject) => {
+          {allSubjects.map((subject) => {
             const progress = getSubjectProgress(subject.id);
             const hasProgress = progress.topicsStudied > 0;
 
@@ -92,6 +112,28 @@ export function SubjectsList() {
                   style={{ '--subject-color': subject.color } as React.CSSProperties}
                 >
                   <div className={styles.cardContent}>
+                    {/* Custom subject badge and delete button */}
+                    {subject.isCustom && (
+                      <div className={styles.customBadgeRow}>
+                        <span className={styles.customBadge}>
+                          <Sparkles size={12} />
+                          Мой курс
+                        </span>
+                        <button
+                          className={styles.deleteButton}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Удалить этот курс?')) {
+                              deleteCustomSubject(subject.id);
+                            }
+                          }}
+                          title="Удалить курс"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+
                     <div className={styles.iconWrapper}>
                       <span className={styles.icon}>
                         <Icon name={subject.icon} size={32} />

@@ -38,12 +38,35 @@ type LatexPart =
   | { type: 'block'; content: string };
 
 /**
+ * Конвертирует \(...\) и \[...\] в $...$ и $$...$$ соответственно
+ */
+function convertLatexDelimiters(text: string): string {
+  let result = text;
+
+  // \[...\] → $$...$$
+  result = result.replace(/\\+\[([\s\S]*?)\\+\]/g, (_, content) => `$$${content}$$`);
+
+  // \(...\) → $...$
+  // Обрабатываем итеративно для вложенных формул (изнутри наружу)
+  let prev = '';
+  while (prev !== result) {
+    prev = result;
+    result = result.replace(/\\+\(((?:(?!\\+\()[\s\S])*?)\\+\)/g, (_, content) => `$${content.trim()}$`);
+  }
+
+  return result;
+}
+
+/**
  * Автоматически оборачивает LaTeX команды в $...$ если они не обёрнуты
  */
 function autoWrapLatex(text: string): string {
-  // Если уже есть $ — не трогаем
-  if (text.includes('$')) {
-    return text;
+  // Сначала конвертируем \(...\) и \[...\] в $...$ и $$...$$
+  let result = convertLatexDelimiters(text);
+
+  // Если уже есть $ — не трогаем дальше
+  if (result.includes('$')) {
+    return result;
   }
 
   // Паттерны LaTeX которые нужно обернуть
@@ -58,14 +81,12 @@ function autoWrapLatex(text: string): string {
     /(\\(?:times|cdot|div|pm|mp|leq|geq|neq|approx|equiv|pi|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|sigma|omega|infty|partial|nabla|forall|exists|in|notin|subset|supset|cup|cap|wedge|vee|rightarrow|leftarrow|Rightarrow|Leftarrow))/g,
   ];
 
-  let result = text;
-
   // Проверяем наличие LaTeX паттернов
   for (const pattern of latexPatterns) {
-    if (pattern.test(text)) {
+    if (pattern.test(result)) {
       // Если весь текст похож на формулу — оборачиваем целиком
-      if (text.trim().startsWith('\\') || /^[A-Za-z_{}^0-9\\=+\-*/<>()[\]\s]+$/.test(text.trim())) {
-        return `$${text}$`;
+      if (result.trim().startsWith('\\') || /^[A-Za-z_{}^0-9\\=+\-*/<>()[\]\s]+$/.test(result.trim())) {
+        return `$${result}$`;
       }
       // Иначе оборачиваем найденные паттерны
       result = result.replace(pattern, (match) => `$${match}$`);

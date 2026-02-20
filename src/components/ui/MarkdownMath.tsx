@@ -17,8 +17,8 @@ type ContentPart =
  *
  * Поддерживает:
  * - Markdown: заголовки, жирный, курсив, код, списки
- * - Inline формулы: $E = mc^2$
- * - Block формулы: $$\int_0^\infty e^{-x^2} dx$$
+ * - Inline формулы: $E = mc^2$ или \( E = mc^2 \)
+ * - Block формулы: $$\int_0^\infty e^{-x^2} dx$$ или \[ \int_0^\infty e^{-x^2} dx \]
  * - Автоматическое определение LaTeX без $
  */
 export function MarkdownMath({ children, className }: MarkdownMathProps) {
@@ -45,10 +45,11 @@ export function MarkdownMath({ children, className }: MarkdownMathProps) {
 
 /**
  * Автоматически оборачивает LaTeX команды в $...$ если они не обёрнуты
+ * НЕ применяется если текст уже содержит $ или \( или \[
  */
 function autoWrapLatex(text: string): string {
-  // Если уже есть $ — предполагаем что всё размечено корректно
-  if (text.includes('$')) {
+  // Если уже есть разметка формул — не трогаем
+  if (text.includes('$') || /\\[(\[]/.test(text)) {
     return text;
   }
 
@@ -90,17 +91,37 @@ function parseContent(text: string): ContentPart[] {
   // Сначала извлекаем формулы, заменяя их на плейсхолдеры
   const formulas: { type: 'inlineMath' | 'blockMath'; content: string }[] = [];
 
-  // Block формулы ($$...$$)
+  // Block формулы: $$...$$ и \[...\]
   let processed = text.replace(/\$\$([\s\S]*?)\$\$/g, (_, formula) => {
     formulas.push({ type: 'blockMath', content: formula.trim() });
     return `\x00FORMULA_${formulas.length - 1}\x00`;
   });
 
-  // Inline формулы ($...$)
+  // \[...\] - нужно обработать разные варианты экранирования
+  processed = processed.replace(/\\+\[([\s\S]*?)\\+\]/g, (_, formula) => {
+    formulas.push({ type: 'blockMath', content: formula.trim() });
+    return `\x00FORMULA_${formulas.length - 1}\x00`;
+  });
+
+  // Inline формулы: $...$ и \(...\)
   processed = processed.replace(/\$((?:[^$\\]|\\.)+?)\$/g, (_, formula) => {
     formulas.push({ type: 'inlineMath', content: formula });
     return `\x00FORMULA_${formulas.length - 1}\x00`;
   });
+
+  // \(...\) - нужно обработать разные варианты экранирования
+  // Иногда приходит как \( ... \), иногда как \\( ... \\)
+  // Ищем \( за которым следует контент без \( до \)
+  // Обрабатываем итеративно для вложенных формул
+  let prevProcessed = '';
+  while (prevProcessed !== processed) {
+    prevProcessed = processed;
+    // Матчим \(...\) где внутри нет \( (чтобы обработать вложенные изнутри наружу)
+    processed = processed.replace(/\\+\(((?:(?!\\+\()[\s\S])*?)\\+\)/g, (_, formula) => {
+      formulas.push({ type: 'inlineMath', content: formula.trim() });
+      return `\x00FORMULA_${formulas.length - 1}\x00`;
+    });
+  }
 
   // Применяем markdown
   const html = parseMarkdown(processed);

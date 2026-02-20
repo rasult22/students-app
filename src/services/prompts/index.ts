@@ -11,4 +11,5 @@ export {
 export {
   STRUCTURE_SYSTEM_PROMPT,
   buildStructureUserPrompt,
+  type StructurePromptOptions,
 } from './structurePrompt';

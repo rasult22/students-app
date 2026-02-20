@@ -1,5 +1,6 @@
 import { generateJSON } from '../openai';
 import { STRUCTURE_SYSTEM_PROMPT, buildStructureUserPrompt } from '../prompts';
+import type { StructurePromptOptions } from '../prompts/structurePrompt';
 import type { Subject, Section, Topic } from '../../types';
 
 interface StructureGenerationResult {
@@ -24,20 +25,31 @@ interface StructureGenerationResult {
   };
 }
 
+export interface GenerateSubjectOptions extends StructurePromptOptions {
+  /** Callback для отслеживания прогресса */
+  onProgress?: (step: string) => void;
+}
+
 /**
  * Генерирует структуру курса из текстового материала
  */
 export async function generateSubjectStructure(
   rawContent: string,
-  subjectHint?: string
+  options?: GenerateSubjectOptions
 ): Promise<Subject> {
-  const userPrompt = buildStructureUserPrompt(rawContent, subjectHint);
+  const { onProgress, ...promptOptions } = options || {};
 
+  onProgress?.('Анализ материала...');
+  const userPrompt = buildStructureUserPrompt(rawContent, promptOptions);
+
+  onProgress?.('Генерация структуры курса...');
   const result = await generateJSON<StructureGenerationResult>(
     STRUCTURE_SYSTEM_PROMPT,
     userPrompt,
     { temperature: 0.6, maxTokens: 4000 }
   );
+
+  onProgress?.('Формирование курса...');
 
   // Генерируем уникальные ID
   const subjectId = generateSlug(result.subject.name);

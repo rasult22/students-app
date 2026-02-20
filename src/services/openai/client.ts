@@ -124,4 +124,49 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Анализирует изображения с помощью GPT-4 Vision
+ * Используется для извлечения текста из PDF страниц
+ */
+export async function analyzeImages(
+  base64Images: string[],
+  prompt: string,
+  options?: GenerateOptions
+): Promise<string> {
+  const openai = getClient();
+
+  // Формируем контент с изображениями
+  const imageContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = base64Images.map(
+    (base64) => ({
+      type: 'image_url' as const,
+      image_url: {
+        url: base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`,
+        detail: 'high' as const,
+      },
+    })
+  );
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o', // Vision требует gpt-4o или gpt-4-vision-preview
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          ...imageContent,
+        ],
+      },
+    ],
+    max_tokens: options?.maxTokens ?? 4000,
+  });
+
+  const content = response.choices[0]?.message?.content;
+
+  if (!content) {
+    throw new Error('Empty response from OpenAI Vision');
+  }
+
+  return content;
+}
+
 export { sleep };

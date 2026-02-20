@@ -34,6 +34,10 @@ export interface Subject {
   color: string;
   sections: Section[];
   estimatedHours: number;
+  /** Курс создан пользователем из загруженных материалов */
+  isCustom?: boolean;
+  /** Дата создания пользовательского курса */
+  createdAt?: Date;
 }
 
 export interface Section {
