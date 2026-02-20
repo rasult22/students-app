@@ -13,7 +13,12 @@
 }
 
 .introIcon {
-  font-size: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-xl);
   margin-bottom: var(--space-6);
   animation: float 3s ease-in-out infinite;
 }
@@ -418,6 +423,29 @@
   justify-content: center;
 }
 
+/* Generation states */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.progressText {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-2);
+}
+
+.errorActions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
 @media (max-width: 640px) {
   .introFeatures {
     flex-direction: column;
@@ -426,5 +454,10 @@
 
   .questionText {
     font-size: var(--text-lg);
+  }
+
+  .errorActions {
+    flex-direction: column;
+    width: 100%;
   }
 }

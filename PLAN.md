@@ -1,221 +1,186 @@
-# План: Загрузка пользовательских материалов для создания курса
+# План: Включение диагностики для пользовательских курсов
 
-## Обзор
+## Текущая ситуация
 
-Добавить возможность создания курса из пользовательских материалов (PDF, текст, ссылки на веб-страницы) с помощью AI-генерации структуры.
+1. **Диагностика отключена для пользовательских курсов** (`DiagnosticTest.tsx:201`):
+   - Проверка `!hasQuestions && isCustomSubject` показывает заглушку
+   - `getQuestionsForSubject()` ищет вопросы только в статическом массиве `diagnosticQuestions`
+   - Для пользовательских курсов вопросов нет, поэтому диагностика недоступна
 
-## Выбранные решения
-- **PDF парсинг**: Через OpenAI GPT-4 Vision (base64)
-- **Веб-страницы**: Fetch + strip HTML
-- **UI**: Кнопка на странице Subjects + отдельный route /create-subject
-- **Хранение**: Только структура курса (без исходных материалов)
+2. **Генератор вопросов уже существует** (`questionGenerator.ts`):
+   - `generateDiagnosticQuestions()` генерирует вопросы через OpenAI
+   - Принимает topic, sectionName, subjectName и создаёт DiagnosticQuestion[]
+
+3. **Проблема с иконкой** (`DiagnosticTest.tsx:209-210`):
+   - AlertCircle внутри div с inline background, но без размеров и border-radius
+   - CSS класс `.introIcon` имеет только `font-size` и `margin-bottom`
+   - На скриншоте видно квадратный контейнер вместо круглого
 
 ---
 
-## Архитектура изменений
+## План реализации
 
+### Задача 1: Исправить иконку предупреждения
+
+**Файл:** `src/components/DiagnosticTest/DiagnosticTest.module.css`
+
+Добавить стили для контейнера с иконкой, когда у него есть фон:
+
+```css
+.introIcon {
+  /* существующие стили */
+  font-size: 4rem;
+  margin-bottom: var(--space-6);
+  animation: float 3s ease-in-out infinite;
+
+  /* добавить */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-xl);
+}
 ```
-src/
-├── services/
-│   ├── openai/
-│   │   └── client.ts           # + analyzeImage() для Vision API
-│   │
-│   ├── generators/
-│   │   └── structureGenerator.ts   # Проверка/обновление
-│   │
-│   └── contentExtractor.ts     # НОВЫЙ: извлечение текста из PDF/URL
-│
-├── types/
-│   └── index.ts                # + isCustom поле для Subject
-│
-├── stores/
-│   └── appStore.ts             # + customSubjects, actions
-│
-├── components/
-│   └── SubjectUploader/        # НОВЫЙ: компонент загрузки
-│       ├── SubjectUploader.tsx
-│       ├── SubjectUploader.module.css
-│       └── index.ts
-│
-└── pages/
-    ├── CreateSubject/          # НОВАЯ страница
-    │   ├── CreateSubject.tsx
-    │   ├── CreateSubject.module.css
-    │   └── index.ts
-    └── Subjects/
-        └── SubjectsList.tsx    # + кнопка "Создать курс"
----
-
-## Этапы реализации
-
-### Этап 1: Типы данных и Store
-
-**Файл: `src/types/index.ts`**
-- Расширить `Subject` интерфейс полем `isCustom?: boolean` для отличия пользовательских курсов
-- Добавить `MaterialSource` type для метаданных источника
-
-**Файл: `src/stores/appStore.ts`**
-- Добавить в state: `customSubjects: Subject[]`
-- Добавить actions:
-  - `addCustomSubject(subject: Subject)`
-  - `deleteCustomSubject(subjectId: string)`
-  - `updateCustomSubject(subjectId: string, updates: Partial<Subject>)`
-- Добавить `subjectCreationProgress` в state для UI индикации
-- Включить `customSubjects` в persist middleware
 
 ---
 
-### Этап 2: Сервисы извлечения контента
+### Задача 2: Включить диагностику для пользовательских курсов
 
-**Новый файл: `src/services/contentExtractor.ts`**
+**Подход:** Генерировать вопросы "на лету" при запуске диагностики.
+
+#### Шаг 1: Изменить DiagnosticTest.tsx
+
+1. Добавить состояния:
+   ```typescript
+   const [isGenerating, setIsGenerating] = useState(false);
+   const [generatedQuestions, setGeneratedQuestions] = useState<DiagnosticQuestion[]>([]);
+   const [generationError, setGenerationError] = useState<string | null>(null);
+   ```
+
+2. Создать функцию генерации вопросов:
+   ```typescript
+   const generateQuestionsForSubject = async () => {
+     setIsGenerating(true);
+     setGenerationError(null);
+
+     try {
+       const allQuestions: DiagnosticQuestion[] = [];
+
+       // Генерируем по 2-3 вопроса на раздел
+       for (const section of subject.sections) {
+         // Берём первые 2 топика из каждого раздела
+         const topicsToUse = section.topics.slice(0, 2);
+
+         for (const topic of topicsToUse) {
+           const questions = await generateDiagnosticQuestions(
+             topic,
+             section.name,
+             subject.name,
+             2 // 2 вопроса на топик
+           );
+           allQuestions.push(...questions);
+         }
+       }
+
+       setGeneratedQuestions(allQuestions);
+       return allQuestions;
+     } catch (error) {
+       setGenerationError('Не удалось сгенерировать вопросы');
+       throw error;
+     } finally {
+       setIsGenerating(false);
+     }
+   };
+   ```
+
+3. Изменить `startTest`:
+   ```typescript
+   const startTest = async () => {
+     if (isCustomSubject && allQuestions.length === 0) {
+       // Генерируем вопросы для пользовательского курса
+       const questions = await generateQuestionsForSubject();
+       // Обновляем allQuestions
+     }
+
+     startDiagnostic(subject.id);
+     setPhase('testing');
+     setStartTime(Date.now());
+     const firstQuestion = selectNextQuestion();
+     setCurrentQuestion(firstQuestion);
+   };
+   ```
+
+4. Убрать ранний return для `!hasQuestions && isCustomSubject`
+
+5. Обновить intro-экран для пользовательских курсов:
+   - Показать индикатор загрузки при `isGenerating`
+   - Показать ошибку при `generationError`
+   - Изменить текст на "Для пользовательского курса вопросы будут сгенерированы автоматически"
+
+#### Шаг 2: Адаптировать selectNextQuestion
+
+Изменить `selectNextQuestion` чтобы он использовал либо `allQuestions`, либо `generatedQuestions`:
+
 ```typescript
-// Функции:
-extractTextFromPDF(file: File): Promise<string>
-  - Конвертировать PDF страницы в base64 images
-  - Отправить в OpenAI Vision API
-  - Получить распознанный текст
-
-extractTextFromURL(url: string): Promise<string>
-  - Fetch страницы через CORS proxy
-  - Удалить HTML теги, скрипты, стили
-  - Вернуть чистый текст
-
-normalizeText(text: string): string
-  - Базовая нормализация (trim, удаление лишних пробелов)
-```
-
-**Обновить: `src/services/openai/client.ts`**
-- Добавить метод `analyzeImages(base64Images: string[], prompt: string)` для работы с Vision API
-
----
-
-### Этап 3: Генератор структуры курса
-
-**Проверить/обновить: `src/services/generators/structureGenerator.ts`**
-- Убедиться что `generateSubjectStructure()` работает корректно
-- Адаптировать промпт для работы с разным контентом
-- Добавить параметр для названия курса от пользователя
-
----
-
-### Этап 4: UI компоненты
-
-**Новый файл: `src/components/SubjectUploader/SubjectUploader.tsx`**
-```
-Компонент с табами:
-1. "Текст" - textarea для вставки текста
-2. "PDF" - drag & drop зона для файла (до 20MB)
-3. "Ссылка" - input для URL
-
-+ Input для названия курса
-+ Input для описания (опционально)
-+ Button "Создать курс"
-+ Progress indicator
-```
-
-**Новый файл: `src/components/SubjectUploader/SubjectUploader.module.css`**
-- Стили в соответствии с design-tokens.css (Constellation theme)
-
----
-
-### Этап 5: Страница создания курса
-
-**Новая папка: `src/pages/CreateSubject/`**
-- `CreateSubject.tsx` - страница с SubjectUploader
-- `CreateSubject.module.css` - стили
-- `index.ts` - экспорт
-
-Функционал:
-- Ввод названия курса
-- Выбор источника материала (табы)
-- Загрузка/ввод контента
-- Progress во время генерации
-- Redirect на /subjects/:id после успеха
-
----
-
-### Этап 6: Интеграция в роутинг и навигацию
-
-**Обновить: `src/App.tsx`**
-- Добавить route `/create-subject` → CreateSubject
-
-**Обновить: `src/pages/Subjects/SubjectsList.tsx`**
-- Добавить кнопку "Создать курс" → navigate('/create-subject')
-- Объединить hardcoded subjects с customSubjects из store
-
-**Обновить: `src/data/subjects.ts`**
-- `getSubjectById()` должен искать и в hardcoded, и в customSubjects
-
----
-
-## Порядок файлов для реализации
-
-1. `src/types/index.ts` - типы
-2. `src/stores/appStore.ts` - state management
-3. `src/services/openai/client.ts` - Vision API метод
-4. `src/services/contentExtractor.ts` - новый сервис
-5. `src/services/generators/structureGenerator.ts` - проверка
-6. `src/components/SubjectUploader/*` - новый компонент
-7. `src/pages/CreateSubject/*` - новая страница
-8. `src/App.tsx` - роутинг
-9. `src/pages/Subjects/SubjectsList.tsx` - кнопка + объединение
-10. `src/data/subjects.ts` - обновить getSubjectById
-
----
-
-## Зависимости
-
-Никаких новых npm пакетов не требуется:
-- OpenAI уже установлен
-- PDF парсинг через OpenAI Vision (не нужен pdfjs)
-- Fetch нативный
-
----
-
-## UI Flow
-
-```
-[Subjects Page]
-     |
-     v
-[+ Создать курс] ──► [/create-subject]
-                           |
-                           v
-                    [Ввод названия]
-                    [Табы: Текст | PDF | Ссылка]
-                    [Загрузка контента]
-                           |
-                           v
-                    [Кнопка "Создать"]
-                           |
-                           v
-                    [Progress: Извлечение...]
-                    [Progress: Генерация...]
-                           |
-                           v
-                    [Redirect → /subjects/:id]
+const questionsPool = isCustomSubject ? generatedQuestions : allQuestions;
 ```
 
 ---
 
-## Технические детали
+## Файлы для изменения
 
-### PDF через Vision API
-```typescript
-// 1. Рендерим PDF страницы в canvas (pdfjs для рендеринга)
-// 2. Конвертируем canvas в base64 PNG
-// 3. Отправляем массив изображений в GPT-4 Vision
-// 4. Получаем распознанный текст
+1. `src/components/DiagnosticTest/DiagnosticTest.tsx`
+   - Добавить импорт `generateDiagnosticQuestions`
+   - Добавить состояния для генерации
+   - Изменить логику старта теста
+   - Обновить UI для loading/error состояний
+
+2. `src/components/DiagnosticTest/DiagnosticTest.module.css`
+   - Добавить стили для `.introIcon` с фоном
+   - Добавить стили для loading состояния (`.generating`)
+
+---
+
+## UI States
+
+### Intro Screen (пользовательский курс)
+
+```
+[Иконка Search или Sparkles]
+"Диагностика знаний"
+
+Для пользовательского курса вопросы будут
+сгенерированы автоматически с помощью AI.
+Это займёт несколько секунд.
+
+• ~8-12 вопросов
+• Адаптивный алгоритм
+• Персональный план
+
+[Начать диагностику]
 ```
 
-### URL Fetching
-```typescript
-// Используем CORS proxy (allorigins.win или собственный)
-// Простой strip HTML через DOMParser
-// Извлекаем текстовый контент
+### Generating State
+
+```
+[Spinner или Pulse иконка]
+"Генерация вопросов..."
+
+Создаём персонализированные вопросы
+на основе структуры курса.
+
+Раздел 2 из 4...
 ```
 
-### Лимиты
-- PDF: до 20 страниц (можно обрезать)
-- Text: до 100,000 символов
-- URL: один URL за раз
+### Error State
+
+```
+[AlertCircle - круглая иконка]
+"Ошибка генерации"
+
+Не удалось сгенерировать вопросы.
+Проверьте подключение к интернету.
+
+[Попробовать снова] [К учебному плану]
+```

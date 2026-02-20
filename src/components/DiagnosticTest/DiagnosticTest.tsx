@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Zap, BarChart3, Target, Check, X, Star, ChevronRight, AlertCircle, ClipboardList } from 'lucide-react';
+import { Search, Zap, BarChart3, Target, Check, X, Star, ChevronRight, AlertCircle, Loader2, Sparkles, RefreshCw } from 'lucide-react';
 import type { Subject, DiagnosticQuestion } from '../../types';
 import { getQuestionsForSubject } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
+import { generateDiagnosticQuestions } from '../../services/generators';
 import { Button, Card } from '../ui';
 import styles from './DiagnosticTest.module.css';
 
@@ -28,6 +29,13 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
   // Проверяем есть ли вопросы для этого курса
   const hasQuestions = allQuestions.length > 0;
   const isCustomSubject = subject.isCustom === true;
+
+  // Состояния для генерации вопросов (пользовательские курсы)
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<DiagnosticQuestion[]>([]);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0 });
+
   const [currentQuestion, setCurrentQuestion] = useState<DiagnosticQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -48,6 +56,50 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
     });
     return states;
   });
+
+  // Получаем актуальный пул вопросов
+  const getQuestionsPool = useCallback(() => {
+    return isCustomSubject && generatedQuestions.length > 0 ? generatedQuestions : allQuestions;
+  }, [isCustomSubject, generatedQuestions, allQuestions]);
+
+  // Генерация вопросов для пользовательского курса
+  const generateQuestionsForSubject = useCallback(async () => {
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    try {
+      const questions: DiagnosticQuestion[] = [];
+      const sectionsToProcess = subject.sections.slice(0, 4); // Максимум 4 раздела
+      setGenerationProgress({ current: 0, total: sectionsToProcess.length });
+
+      for (let i = 0; i < sectionsToProcess.length; i++) {
+        const section = sectionsToProcess[i];
+        setGenerationProgress({ current: i + 1, total: sectionsToProcess.length });
+
+        // Берём первые 2 топика из каждого раздела
+        const topicsToUse = section.topics.slice(0, 2);
+
+        for (const topic of topicsToUse) {
+          const generated = await generateDiagnosticQuestions(
+            topic,
+            section.name,
+            subject.name,
+            2 // 2 вопроса на топик
+          );
+          questions.push(...generated);
+        }
+      }
+
+      setGeneratedQuestions(questions);
+      return questions;
+    } catch (error) {
+      console.error('Failed to generate questions:', error);
+      setGenerationError('Не удалось сгенерировать вопросы. Проверьте подключение к интернету.');
+      throw error;
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [subject]);
 
   // Adaptive algorithm to select next question
   const selectNextQuestion = useCallback((): DiagnosticQuestion | null => {
@@ -70,7 +122,8 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
         continue;
       }
 
-      const sectionQuestions = allQuestions.filter(
+      const questionsPool = getQuestionsPool();
+      const sectionQuestions = questionsPool.filter(
         (q) => q.sectionId === sectionState.sectionId
       );
 
@@ -106,13 +159,46 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
     }
 
     return null;
-  }, [allQuestions, sectionStates]);
+  }, [getQuestionsPool, sectionStates]);
 
-  const startTest = () => {
+  // Выбор первого вопроса из переданного пула
+  const selectFirstQuestion = useCallback((questionsPool: DiagnosticQuestion[]): DiagnosticQuestion | null => {
+    if (questionsPool.length === 0) return null;
+
+    // Выбираем случайный вопрос beginner уровня, если есть
+    const beginnerQuestions = questionsPool.filter(q => q.difficulty === 'beginner');
+    if (beginnerQuestions.length > 0) {
+      return beginnerQuestions[Math.floor(Math.random() * beginnerQuestions.length)];
+    }
+
+    // Иначе любой
+    return questionsPool[Math.floor(Math.random() * questionsPool.length)];
+  }, []);
+
+  const startTest = async () => {
+    let questionsToUse = allQuestions;
+
+    // Для пользовательских курсов сначала генерируем вопросы
+    if (isCustomSubject && !hasQuestions && generatedQuestions.length === 0) {
+      try {
+        questionsToUse = await generateQuestionsForSubject();
+      } catch {
+        // Ошибка уже обработана в generateQuestionsForSubject
+        return;
+      }
+    } else if (isCustomSubject && generatedQuestions.length > 0) {
+      questionsToUse = generatedQuestions;
+    }
+
+    if (questionsToUse.length === 0) {
+      setGenerationError('Не удалось получить вопросы для диагностики');
+      return;
+    }
+
     startDiagnostic(subject.id);
     setPhase('testing');
     setStartTime(Date.now());
-    const firstQuestion = selectNextQuestion();
+    const firstQuestion = selectFirstQuestion(questionsToUse);
     setCurrentQuestion(firstQuestion);
   };
 
@@ -197,8 +283,8 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
     });
   };
 
-  // Если нет вопросов для пользовательского курса - показываем специальный экран
-  if (!hasQuestions && isCustomSubject) {
+  // Экран генерации вопросов
+  if (isGenerating) {
     return (
       <div className={styles.container}>
         <motion.div
@@ -206,25 +292,55 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
           animate={{ opacity: 1, y: 0 }}
           className={styles.introScreen}
         >
-          <div className={styles.introIcon} style={{ background: 'var(--color-tertiary-ghost)' }}>
-            <AlertCircle size={48} style={{ color: 'var(--color-tertiary)' }} />
+          <div className={styles.introIcon} style={{ background: 'var(--color-accent-ghost)' }}>
+            <Loader2 size={48} style={{ color: 'var(--color-accent)' }} className={styles.spin} />
           </div>
-          <h2 className={styles.introTitle}>Диагностика недоступна</h2>
+          <h2 className={styles.introTitle}>Генерация вопросов...</h2>
           <p className={styles.introDescription}>
-            Для пользовательских курсов диагностика пока не поддерживается.
-            Вы можете сразу перейти к изучению материала.
+            Создаём персонализированные вопросы на основе структуры курса.
+            Это займёт несколько секунд.
           </p>
+          {generationProgress.total > 0 && (
+            <p className={styles.progressText}>
+              Раздел {generationProgress.current} из {generationProgress.total}
+            </p>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
 
-          <div className={styles.introFeatures}>
-            <div className={styles.feature}>
-              <ClipboardList size={18} className={styles.featureIcon} />
-              <span>Перейдите к учебному плану</span>
-            </div>
+  // Экран ошибки генерации
+  if (generationError) {
+    return (
+      <div className={styles.container}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={styles.introScreen}
+        >
+          <div className={styles.introIcon} style={{ background: 'var(--color-error)', opacity: 0.15 }}>
+            <AlertCircle size={48} style={{ color: 'var(--color-error)' }} />
           </div>
-
-          <Button size="lg" onClick={onComplete}>
-            К учебному плану
-          </Button>
+          <h2 className={styles.introTitle}>Ошибка генерации</h2>
+          <p className={styles.introDescription}>
+            {generationError}
+          </p>
+          <div className={styles.errorActions}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setGenerationError(null);
+                startTest();
+              }}
+              icon={<RefreshCw size={18} />}
+            >
+              Попробовать снова
+            </Button>
+            <Button variant="ghost" onClick={onComplete}>
+              К учебному плану
+            </Button>
+          </div>
         </motion.div>
       </div>
     );
@@ -241,12 +357,14 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
             exit={{ opacity: 0, y: -20 }}
             className={styles.introScreen}
           >
-            <div className={styles.introIcon}><Search size={48} /></div>
+            <div className={styles.introIcon} style={isCustomSubject ? { background: 'var(--color-secondary-ghost)' } : undefined}>
+              {isCustomSubject ? <Sparkles size={48} style={{ color: 'var(--color-secondary)' }} /> : <Search size={48} />}
+            </div>
             <h2 className={styles.introTitle}>Диагностика знаний</h2>
             <p className={styles.introDescription}>
-              Мы зададим несколько вопросов по разным разделам курса, чтобы
-              определить ваш текущий уровень. На основе результатов составим
-              персональный план обучения.
+              {isCustomSubject
+                ? 'Вопросы будут сгенерированы автоматически с помощью AI на основе структуры вашего курса. Это займёт несколько секунд.'
+                : 'Мы зададим несколько вопросов по разным разделам курса, чтобы определить ваш текущий уровень. На основе результатов составим персональный план обучения.'}
             </p>
 
             <div className={styles.introFeatures}>
