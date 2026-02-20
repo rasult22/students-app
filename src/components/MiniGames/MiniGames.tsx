@@ -18,6 +18,9 @@ import { generateMiniGameQuestions } from '../../services/generators';
 import { Button, Icon, MathText } from '../ui';
 import { FootballGame } from './games/FootballGame';
 import { QuestGame } from './games/QuestGame';
+import { MovieGame } from './games/MovieGame';
+import { TravelGame } from './games/TravelGame';
+import { CookingGame } from './games/CookingGame';
 import styles from './MiniGames.module.css';
 
 type Phase = 'selection' | 'loading' | 'playing' | 'results';
@@ -277,8 +280,68 @@ export function MiniGames({ subject }: MiniGamesProps) {
           </motion.div>
         )}
 
+        {/* Playing Screen - Movie Game */}
+        {phase === 'playing' && selectedGame === 'movie-scenes' && questions.length > 0 && (
+          <motion.div
+            key="playing-movie"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <MovieGame
+              questions={questions}
+              onComplete={(result, stats) => {
+                setFinalStats(stats);
+                setGameResult(result);
+                setPhase('results');
+              }}
+              onExit={handlePlayAgain}
+            />
+          </motion.div>
+        )}
+
+        {/* Playing Screen - Travel Game */}
+        {phase === 'playing' && selectedGame === 'travel-adventure' && questions.length > 0 && (
+          <motion.div
+            key="playing-travel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <TravelGame
+              questions={questions}
+              onComplete={(result, stats) => {
+                setFinalStats(stats);
+                setGameResult(result);
+                setPhase('results');
+              }}
+              onExit={handlePlayAgain}
+            />
+          </motion.div>
+        )}
+
+        {/* Playing Screen - Cooking Game */}
+        {phase === 'playing' && selectedGame === 'cooking-recipe' && questions.length > 0 && (
+          <motion.div
+            key="playing-cooking"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <CookingGame
+              questions={questions}
+              onComplete={(result, stats) => {
+                setFinalStats(stats);
+                setGameResult(result);
+                setPhase('results');
+              }}
+              onExit={handlePlayAgain}
+            />
+          </motion.div>
+        )}
+
         {/* Playing Screen - Generic (for other games) */}
-        {phase === 'playing' && selectedGame !== 'football-quiz' && selectedGame !== 'game-quest' && currentQuestion && (
+        {phase === 'playing' && selectedGame !== 'football-quiz' && selectedGame !== 'game-quest' && selectedGame !== 'movie-scenes' && selectedGame !== 'travel-adventure' && selectedGame !== 'cooking-recipe' && currentQuestion && (
           <motion.div
             key="playing"
             initial={{ opacity: 0 }}
