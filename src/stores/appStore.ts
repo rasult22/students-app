@@ -12,6 +12,12 @@ import type {
   FlashcardProgress,
   ReviewQuality,
   Subject,
+  FinalTestQuestion,
+  FinalTestSession,
+  FinalTestHistory,
+  FinalTestAnswer,
+  CourseWrapped,
+  WrappedData,
 } from '../types';
 import {
   createInitialProgress,
@@ -43,6 +49,13 @@ interface AppState {
 
   // Карточки, добавленные в колоду для повторения (cardId -> true)
   addedToReviewDeck: Record<string, boolean>;
+
+  // Final test
+  currentFinalTest: FinalTestSession | null;
+  finalTestHistory: Record<string, FinalTestHistory>; // keyed by subjectId
+
+  // Course Wrapped (personal summary)
+  courseWrapped: Record<string, CourseWrapped>; // keyed by subjectId
 
   // Actions
   setUser: (name: string, interests: Interest[]) => void;
@@ -88,6 +101,19 @@ interface AppState {
   addCustomSubject: (subject: Subject) => void;
   deleteCustomSubject: (subjectId: string) => void;
   getCustomSubject: (subjectId: string) => Subject | undefined;
+
+  // Final test
+  canTakeFinalTest: (subjectId: string, allTopicIds: string[]) => boolean;
+  startFinalTest: (subjectId: string, questions: FinalTestQuestion[]) => void;
+  answerFinalTestQuestion: (questionId: string, answer: string, isCorrect: boolean, sectionId: string) => void;
+  completeFinalTest: () => FinalTestSession | null;
+  getFinalTestHistory: (subjectId: string) => FinalTestHistory | null;
+  getCurrentFinalTest: () => FinalTestSession | null;
+
+  // Course Wrapped
+  saveWrapped: (wrapped: CourseWrapped) => void;
+  getWrapped: (subjectId: string) => CourseWrapped | null;
+  generateWrappedData: (subjectId: string, subjectName: string, sections: { id: string; name: string; topicIds: string[] }[], finalTestScore: number) => WrappedData;
 }
 
 const calculateMasteryLevel = (score: number, attempts: number): MasteryLevel => {
@@ -111,6 +137,9 @@ export const useAppStore = create<AppState>()(
       generationProgress: { status: 'idle' },
       flashcardProgress: {},
       addedToReviewDeck: {},
+      currentFinalTest: null,
+      finalTestHistory: {},
+      courseWrapped: {},
 
       setUser: (name, interests) => {
         const user: UserProfile = {
@@ -459,6 +488,211 @@ export const useAppStore = create<AppState>()(
         const { customSubjects } = get();
         return customSubjects.find((s) => s.id === subjectId);
       },
+
+      // Final test actions
+      canTakeFinalTest: (subjectId, allTopicIds) => {
+        const { knowledgeStates } = get();
+        // Все темы должны быть изучены (attempts > 0)
+        return allTopicIds.every((topicId) => {
+          const state = knowledgeStates[topicId];
+          return state && state.attempts > 0;
+        });
+      },
+
+      startFinalTest: (subjectId, questions) => {
+        const session: FinalTestSession = {
+          id: crypto.randomUUID(),
+          subjectId,
+          startedAt: new Date(),
+          questions,
+          answers: [],
+          status: 'in-progress',
+          score: 0,
+          sectionScores: {},
+        };
+        set({ currentFinalTest: session });
+      },
+
+      answerFinalTestQuestion: (questionId, answer, isCorrect, sectionId) => {
+        const { currentFinalTest } = get();
+        if (!currentFinalTest) return;
+
+        const newAnswer: FinalTestAnswer = {
+          questionId,
+          answer,
+          isCorrect,
+          answeredAt: new Date(),
+        };
+
+        // Обновляем sectionScores
+        const sectionScores = { ...currentFinalTest.sectionScores };
+        if (!sectionScores[sectionId]) {
+          sectionScores[sectionId] = { correct: 0, total: 0 };
+        }
+        sectionScores[sectionId].total += 1;
+        if (isCorrect) {
+          sectionScores[sectionId].correct += 1;
+        }
+
+        set({
+          currentFinalTest: {
+            ...currentFinalTest,
+            answers: [...currentFinalTest.answers, newAnswer],
+            sectionScores,
+          },
+        });
+      },
+
+      completeFinalTest: () => {
+        const { currentFinalTest, finalTestHistory } = get();
+        if (!currentFinalTest) return null;
+
+        // Вычисляем финальный score
+        const totalQuestions = currentFinalTest.questions.length;
+        const correctAnswers = currentFinalTest.answers.filter((a) => a.isCorrect).length;
+        const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
+        const completedSession: FinalTestSession = {
+          ...currentFinalTest,
+          status: 'completed',
+          completedAt: new Date(),
+          score,
+        };
+
+        // Обновляем историю
+        const subjectId = currentFinalTest.subjectId;
+        const history = finalTestHistory[subjectId] || {
+          subjectId,
+          attempts: [],
+          bestScore: 0,
+          lastAttemptAt: undefined,
+        };
+
+        const updatedHistory: FinalTestHistory = {
+          ...history,
+          attempts: [...history.attempts, completedSession],
+          bestScore: Math.max(history.bestScore, score),
+          lastAttemptAt: new Date(),
+        };
+
+        set({
+          currentFinalTest: null,
+          finalTestHistory: {
+            ...finalTestHistory,
+            [subjectId]: updatedHistory,
+          },
+        });
+
+        return completedSession;
+      },
+
+      getFinalTestHistory: (subjectId) => {
+        const { finalTestHistory } = get();
+        return finalTestHistory[subjectId] || null;
+      },
+
+      getCurrentFinalTest: () => {
+        return get().currentFinalTest;
+      },
+
+      // Course Wrapped actions
+      saveWrapped: (wrapped) => {
+        const { courseWrapped } = get();
+        set({
+          courseWrapped: {
+            ...courseWrapped,
+            [wrapped.subjectId]: wrapped,
+          },
+        });
+      },
+
+      getWrapped: (subjectId) => {
+        const { courseWrapped } = get();
+        return courseWrapped[subjectId] || null;
+      },
+
+      generateWrappedData: (subjectId, subjectName, sections, finalTestScore) => {
+        const { user, knowledgeStates, flashcardProgress, addedToReviewDeck } = get();
+
+        // Считаем статистику по темам
+        let totalTopics = 0;
+        let masteredTopics = 0;
+        let learningTopics = 0;
+        let strugglingTopics = 0;
+        let totalAttempts = 0;
+
+        const sectionScores: { id: string; name: string; score: number; level: MasteryLevel }[] = [];
+        let bestSection: { id: string; name: string; score: number } = { id: '', name: '', score: 0 };
+
+        sections.forEach((section) => {
+          let sectionTotal = 0;
+          let sectionScore = 0;
+          let sectionKnown = 0;
+
+          section.topicIds.forEach((topicId) => {
+            totalTopics++;
+            const state = knowledgeStates[topicId];
+            if (state) {
+              totalAttempts += state.attempts;
+              if (state.masteryLevel === 'mastered') masteredTopics++;
+              else if (state.masteryLevel === 'learning') learningTopics++;
+              else if (state.masteryLevel === 'struggling') strugglingTopics++;
+
+              if (state.attempts > 0) {
+                sectionTotal++;
+                sectionScore += state.score;
+                sectionKnown++;
+              }
+            }
+          });
+
+          const avgScore = sectionKnown > 0 ? Math.round(sectionScore / sectionKnown) : 0;
+          const level = calculateMasteryLevel(avgScore, sectionKnown);
+
+          sectionScores.push({ id: section.id, name: section.name, score: avgScore, level });
+
+          if (avgScore > bestSection.score) {
+            bestSection = { id: section.id, name: section.name, score: avgScore };
+          }
+        });
+
+        // Карточки
+        const subjectCards = Object.values(flashcardProgress).filter(
+          (p) => p.subjectId === subjectId && addedToReviewDeck[p.cardId]
+        );
+        const totalFlashcards = subjectCards.length;
+        const masteredFlashcards = subjectCards.filter((p) => p.repetitions >= 3 && p.easeFactor >= 2.5).length;
+
+        // Overall mastery
+        const overallScore = totalTopics > 0 ? Math.round((masteredTopics / totalTopics) * 100) : 0;
+        const overallMastery = calculateMasteryLevel(overallScore, totalTopics);
+
+        // Improvement (примерно - от среднего начального до текущего)
+        const improvement = Math.max(0, finalTestScore - 50); // Примерная оценка улучшения
+
+        const wrappedData: WrappedData = {
+          subjectId,
+          subjectName,
+          userName: user?.name || 'Студент',
+          finalTestScore,
+          overallMastery,
+          totalTopics,
+          masteredTopics,
+          learningTopics,
+          strugglingTopics,
+          totalFlashcards,
+          masteredFlashcards,
+          studyDays: Math.ceil(totalAttempts / 5), // Примерная оценка дней
+          longestStreak: Math.min(7, Math.ceil(totalAttempts / 3)), // Примерная оценка
+          bestSection,
+          improvement,
+          totalAttempts,
+          sectionScores,
+          completedAt: new Date(),
+        };
+
+        return wrappedData;
+      },
     }),
     {
       name: 'student-app-storage',
@@ -470,6 +704,8 @@ export const useAppStore = create<AppState>()(
         flashcardProgress: state.flashcardProgress,
         addedToReviewDeck: state.addedToReviewDeck,
         customSubjects: state.customSubjects,
+        finalTestHistory: state.finalTestHistory,
+        courseWrapped: state.courseWrapped,
       }),
     }
   )

@@ -136,6 +136,16 @@
   background: var(--color-deep);
 }
 
+.disabledTab {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.disabledTab:hover {
+  color: var(--color-text-tertiary);
+  background: none;
+}
+
 .tabIcon {
   display: flex;
   align-items: center;

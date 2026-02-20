@@ -46,7 +46,7 @@ export async function generateTopicLesson(
     presentation: normalizePresentation(result.presentation),
     examples: normalizeExamples(result.examples),
     quiz: normalizeQuiz(result.quiz),
-    flashcards: normalizeFlashcards(result.flashcards),
+    flashcards: normalizeFlashcards(result.flashcards, topic.id),
     infographic: result.infographic,
     generatedAt: new Date(),
   };
@@ -114,11 +114,12 @@ function normalizeQuiz(quiz: QuizBlock): QuizBlock {
   };
 }
 
-function normalizeFlashcards(flashcards: Flashcard[]): Flashcard[] {
+function normalizeFlashcards(flashcards: Flashcard[], topicId: string): Flashcard[] {
   if (!Array.isArray(flashcards)) return [];
 
   return flashcards.map((fc, index) => ({
-    id: fc.id || `fc-${index + 1}`,
+    // Используем topicId в ID карточки чтобы избежать коллизий между темами
+    id: fc.id || `fc-${topicId}-${index + 1}`,
     front: fc.front || '',
     back: fc.back || '',
     tags: Array.isArray(fc.tags) ? fc.tags : undefined,

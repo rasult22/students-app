@@ -429,3 +429,113 @@ export interface GenerationProgress {
   completedSteps?: number;
   error?: string;
 }
+
+// === FINAL TEST ===
+
+/** Вопрос финального теста */
+export interface FinalTestQuestion {
+  id: string;
+  topicId: string;
+  sectionId: string;
+  text: string;
+  type: QuestionType;
+  options?: QuestionOption[];
+  correctAnswer: string | string[];
+  difficulty: DifficultyLevel;
+  explanation?: string;
+}
+
+/** Ответ на вопрос финального теста */
+export interface FinalTestAnswer {
+  questionId: string;
+  answer: string;
+  isCorrect: boolean;
+  answeredAt: Date;
+}
+
+/** Сессия финального теста */
+export interface FinalTestSession {
+  id: string;
+  subjectId: string;
+  startedAt: Date;
+  completedAt?: Date;
+  questions: FinalTestQuestion[];
+  answers: FinalTestAnswer[];
+  status: 'in-progress' | 'completed';
+  score: number;
+  sectionScores: Record<string, { correct: number; total: number }>;
+}
+
+/** История финальных тестов по предмету */
+export interface FinalTestHistory {
+  subjectId: string;
+  attempts: FinalTestSession[];
+  bestScore: number;
+  lastAttemptAt?: Date;
+}
+
+// === COURSE WRAPPED (Personal Summary) ===
+
+/** Тип слайда Wrapped */
+export type WrappedSlideType =
+  | 'intro'
+  | 'stat'
+  | 'highlight'
+  | 'achievement'
+  | 'section-breakdown'
+  | 'certificate'
+  | 'outro';
+
+/** Тип анимации для слайда */
+export type WrappedAnimation = 'count-up' | 'reveal' | 'progress' | 'confetti';
+
+/** Тип фона для слайда */
+export type WrappedBackground = 'gradient-1' | 'gradient-2' | 'gradient-3' | 'gradient-4';
+
+/** Слайд Wrapped */
+export interface WrappedSlide {
+  id: string;
+  type: WrappedSlideType;
+  title: string;
+  subtitle?: string;
+  value?: string | number;
+  secondaryValue?: string | number;
+  icon?: string;
+  animation?: WrappedAnimation;
+  background?: WrappedBackground;
+  /** Дополнительные данные для сложных слайдов */
+  data?: Record<string, unknown>;
+}
+
+/** Данные для генерации Wrapped */
+export interface WrappedData {
+  subjectId: string;
+  subjectName: string;
+  userName: string;
+  finalTestScore: number;
+  overallMastery: MasteryLevel;
+  totalTopics: number;
+  masteredTopics: number;
+  learningTopics: number;
+  strugglingTopics: number;
+  totalFlashcards: number;
+  masteredFlashcards: number;
+  studyDays: number;
+  longestStreak: number;
+  bestSection: { id: string; name: string; score: number };
+  hardestConquered?: { id: string; name: string; initialScore: number; finalScore: number };
+  improvement: number;
+  totalAttempts: number;
+  sectionScores: { id: string; name: string; score: number; level: MasteryLevel }[];
+  completedAt: Date;
+}
+
+/** Сохранённый Wrapped */
+export interface CourseWrapped {
+  id: string;
+  subjectId: string;
+  data: WrappedData;
+  slides: WrappedSlide[];
+  generatedAt: Date;
+  certificateId?: string;
+}

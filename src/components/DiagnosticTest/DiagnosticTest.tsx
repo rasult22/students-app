@@ -30,6 +30,9 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
   const hasQuestions = allQuestions.length > 0;
   const isCustomSubject = subject.isCustom === true;
 
+  // Нужна генерация если нет предзаписанных вопросов (для любого предмета)
+  const needsGeneration = !hasQuestions;
+
   // Состояния для генерации вопросов (пользовательские курсы)
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<DiagnosticQuestion[]>([]);
@@ -59,8 +62,8 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
 
   // Получаем актуальный пул вопросов
   const getQuestionsPool = useCallback(() => {
-    return isCustomSubject && generatedQuestions.length > 0 ? generatedQuestions : allQuestions;
-  }, [isCustomSubject, generatedQuestions, allQuestions]);
+    return generatedQuestions.length > 0 ? generatedQuestions : allQuestions;
+  }, [generatedQuestions, allQuestions]);
 
   // Генерация вопросов для пользовательского курса
   const generateQuestionsForSubject = useCallback(async () => {
@@ -178,15 +181,15 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
   const startTest = async () => {
     let questionsToUse = allQuestions;
 
-    // Для пользовательских курсов сначала генерируем вопросы
-    if (isCustomSubject && !hasQuestions && generatedQuestions.length === 0) {
+    // Генерируем вопросы если их нет (для любого предмета)
+    if (needsGeneration && generatedQuestions.length === 0) {
       try {
         questionsToUse = await generateQuestionsForSubject();
       } catch {
         // Ошибка уже обработана в generateQuestionsForSubject
         return;
       }
-    } else if (isCustomSubject && generatedQuestions.length > 0) {
+    } else if (generatedQuestions.length > 0) {
       questionsToUse = generatedQuestions;
     }
 
@@ -357,13 +360,13 @@ export function DiagnosticTest({ subject, onComplete }: DiagnosticTestProps) {
             exit={{ opacity: 0, y: -20 }}
             className={styles.introScreen}
           >
-            <div className={styles.introIcon} style={isCustomSubject ? { background: 'var(--color-secondary-ghost)' } : undefined}>
-              {isCustomSubject ? <Sparkles size={48} style={{ color: 'var(--color-secondary)' }} /> : <Search size={48} />}
+            <div className={styles.introIcon} style={needsGeneration ? { background: 'var(--color-secondary-ghost)' } : undefined}>
+              {needsGeneration ? <Sparkles size={48} style={{ color: 'var(--color-secondary)' }} /> : <Search size={48} />}
             </div>
             <h2 className={styles.introTitle}>Диагностика знаний</h2>
             <p className={styles.introDescription}>
-              {isCustomSubject
-                ? 'Вопросы будут сгенерированы автоматически с помощью AI на основе структуры вашего курса. Это займёт несколько секунд.'
+              {needsGeneration
+                ? 'Вопросы будут сгенерированы автоматически с помощью AI на основе структуры курса. Это займёт несколько секунд.'
                 : 'Мы зададим несколько вопросов по разным разделам курса, чтобы определить ваш текущий уровень. На основе результатов составим персональный план обучения.'}
             </p>
 

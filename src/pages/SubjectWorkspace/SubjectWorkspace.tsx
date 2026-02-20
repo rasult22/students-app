@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -7,6 +7,8 @@ import {
   ClipboardList,
   Map,
   RotateCcw,
+  Trophy,
+  Sparkles,
 } from 'lucide-react';
 import { getSubjectById } from '../../data/subjects';
 import { useAppStore } from '../../stores/appStore';
@@ -14,18 +16,22 @@ import { KnowledgeMap } from '../../components/KnowledgeMap';
 import { DiagnosticTest } from '../../components/DiagnosticTest';
 import { LearningPlan } from '../../components/LearningPlan';
 import { ReviewSession } from '../../components/ReviewSession';
+import { FinalTest } from '../../components/FinalTest';
+import { CourseWrapped } from '../../components/CourseWrapped';
 import { Button, Card, Icon } from '../../components/ui';
 import { PageTransition } from '../../components/layout';
 import styles from './SubjectWorkspace.module.css';
 
-type Tab = 'overview' | 'diagnostic' | 'learning' | 'review' | 'map';
+type Tab = 'overview' | 'diagnostic' | 'learning' | 'review' | 'map' | 'final-test';
 
 export function SubjectWorkspace() {
   const { subjectId } = useParams<{ subjectId: string }>();
   const navigate = useNavigate();
-  const { knowledgeStates, setCurrentSubject } = useAppStore();
+  const { knowledgeStates, setCurrentSubject, canTakeFinalTest, getFinalTestHistory, getWrapped } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [showWrapped, setShowWrapped] = useState(false);
+  const [lastFinalTestScore, setLastFinalTestScore] = useState<number>(0);
 
   const subject = subjectId ? getSubjectById(subjectId) : null;
 
@@ -64,12 +70,28 @@ export function SubjectWorkspace() {
 
   const hasDiagnosticData = studiedTopics > 0;
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  // Проверяем доступность финального теста
+  const allTopicIds = useMemo(
+    () => subject.sections.flatMap((section) => section.topics.map((t) => t.id)),
+    [subject.sections]
+  );
+  const canTakeFinal = canTakeFinalTest(subject.id, allTopicIds);
+  const finalTestHistory = getFinalTestHistory(subject.id);
+  const existingWrapped = getWrapped(subject.id);
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode; disabled?: boolean; tooltip?: string }[] = [
     { id: 'overview', label: 'Обзор', icon: <LayoutDashboard size={18} /> },
     { id: 'diagnostic', label: 'Диагностика', icon: <Search size={18} /> },
     { id: 'learning', label: 'Учебный план', icon: <ClipboardList size={18} /> },
     { id: 'review', label: 'Повторение', icon: <RotateCcw size={18} /> },
     { id: 'map', label: 'Карта знаний', icon: <Map size={18} /> },
+    {
+      id: 'final-test',
+      label: 'Финальный тест',
+      icon: <Trophy size={18} />,
+      disabled: !canTakeFinal,
+      tooltip: !canTakeFinal ? 'Изучите все темы' : undefined,
+    },
   ];
 
   const progressPercent = Math.round((studiedTopics / totalTopics) * 100);
@@ -93,8 +115,10 @@ export function SubjectWorkspace() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`${styles.tab} ${activeTab === tab.id ? styles.activeTab : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              className={`${styles.tab} ${activeTab === tab.id ? styles.activeTab : ''} ${tab.disabled ? styles.disabledTab : ''}`}
+              onClick={() => !tab.disabled && setActiveTab(tab.id)}
+              disabled={tab.disabled}
+              title={tab.tooltip}
             >
               <span className={styles.tabIcon}>{tab.icon}</span>
               <span className={styles.tabLabel}>{tab.label}</span>
@@ -149,7 +173,30 @@ export function SubjectWorkspace() {
                           Продолжить обучение
                         </Button>
                       )}
+                      {canTakeFinal && (
+                        <Button
+                          variant="secondary"
+                          onClick={() => setActiveTab('final-test')}
+                          icon={<Trophy size={18} />}
+                        >
+                          Финальный тест
+                        </Button>
+                      )}
                     </div>
+                    {existingWrapped && (
+                      <div style={{ marginTop: 'var(--space-4)' }}>
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setLastFinalTestScore(existingWrapped.data.finalTestScore);
+                            setShowWrapped(true);
+                          }}
+                          icon={<Sparkles size={18} />}
+                        >
+                          Посмотреть итоги курса
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </Card>
 
@@ -242,8 +289,38 @@ export function SubjectWorkspace() {
                 <KnowledgeMap subject={subject} />
               </motion.div>
             )}
+
+            {activeTab === 'final-test' && (
+              <motion.div
+                key="final-test"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <FinalTest
+                  subject={subject}
+                  onComplete={() => setActiveTab('overview')}
+                  onShowWrapped={() => {
+                    // Получаем последний результат теста
+                    const history = getFinalTestHistory(subject.id);
+                    const lastAttempt = history?.attempts[history.attempts.length - 1];
+                    setLastFinalTestScore(lastAttempt?.score || 0);
+                    setShowWrapped(true);
+                  }}
+                />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
+
+        {/* Course Wrapped overlay */}
+        {showWrapped && (
+          <CourseWrapped
+            subject={subject}
+            finalTestScore={lastFinalTestScore}
+            onClose={() => setShowWrapped(false)}
+          />
+        )}
       </div>
     </PageTransition>
   );

@@ -13,55 +13,62 @@ npm run preview  # Preview production build locally
 
 ## Architecture
 
-This is a React + TypeScript student learning application built with Vite. The app helps students learn subjects (currently focused on mathematics like Linear Algebra, Calculus, Probability Theory) through diagnostic testing, knowledge tracking, and AI-generated lessons.
+React + TypeScript student learning app built with Vite. Helps students learn subjects through diagnostic testing, knowledge tracking, and AI-generated lessons.
 
 ### Core Structure
 
-- **State Management**: Zustand store (`src/stores/appStore.ts`) with persistence middleware. Handles user profile, knowledge states, diagnostic sessions, and flashcard progress.
-- **Routing**: React Router v7 with protected routes. Onboarding flow redirects unauthenticated users.
-- **Styling**: CSS Modules with a "Constellation" design system defined in `src/styles/design-tokens.css` (dark theme with bioluminescent accents).
-- **AI Content Generation**: OpenAI integration (`src/services/openai/`, `src/services/generators/`) for generating lessons, questions, and subject structures.
+- **State Management**: Zustand store (`src/stores/appStore.ts`) with persistence to localStorage (`student-app-storage` key). Persisted slices: user, isOnboarded, knowledgeStates, generatedLessons, flashcardProgress, addedToReviewDeck, customSubjects.
+- **Routing**: React Router v7 with protected routes via `ProtectedRoute` component.
+- **Styling**: CSS Modules with "Constellation" design system (`src/styles/design-tokens.css`) - dark theme with bioluminescent accents.
+
+### Routes (`src/App.tsx`)
+
+- `/` - Onboarding (redirects to /subjects if authenticated)
+- `/subjects` - Subject list
+- `/subjects/:subjectId` - Subject workspace (tabs: Overview, Diagnostic, Learning Plan, Review, Knowledge Map)
+- `/subjects/:subjectId/topic/:topicId` - Topic lesson page
+- `/knowledge-map` - Global knowledge graph
+- `/create-subject` - Custom subject creation from PDF/URL
 
 ### Key Data Models (`src/types/index.ts`)
 
-- `Subject` → `Section` → `Topic` hierarchy for curriculum
+- `Subject` → `Section` → `Topic` hierarchy (supports `isCustom` flag for user-created subjects)
 - `KnowledgeState` tracks per-topic mastery (unknown/struggling/learning/mastered)
-- `DiagnosticSession` and `DiagnosticQuestion` for testing flow
 - `TopicLesson` with theory, presentation slides, examples, quiz, and flashcards
 - `FlashcardProgress` for spaced repetition (SM-2 algorithm)
-
-### Component Organization
-
-- `src/components/ui/` - Reusable primitives (Button, Input, Card, MathText, MarkdownMath)
-- `src/components/layout/` - Page layouts (MainLayout, DashboardLayout, AppHeader, PageTransition)
-- `src/components/` - Feature components (DiagnosticTest, KnowledgeMap, LearningPlan, TopicLesson)
-- `src/pages/` - Route-level components (Onboarding, Subjects, SubjectWorkspace, GlobalKnowledgeMap, TopicLessonPage)
-- `src/services/` - Business logic (OpenAI client, generators, prompts, spacedRepetition)
+- `ReviewQuality` (0-5 scale for SM-2)
 
 ### AI Content Generation (`src/services/`)
 
-- `openai/client.ts` - OpenAI API wrapper with `generateJSON()` and `generateText()`
+- `openai/client.ts` - OpenAI wrapper: `generateJSON()`, `generateText()`, `analyzeImages()` (for Vision)
+- `openai/config.ts` - Default model: `gpt-4o-mini`, Vision uses `gpt-4o`
 - `generators/lessonGenerator.ts` - Generates complete topic lessons
 - `generators/questionGenerator.ts` - Generates diagnostic questions
-- `generators/structureGenerator.ts` - Generates subject curriculum structure
-- `prompts/` - Prompt templates for each generator
-- `spacedRepetition.ts` - SM-2 algorithm for flashcard scheduling
+- `generators/structureGenerator.ts` - Generates subject curriculum from extracted content
+- `contentExtractor.ts` - Extracts text from PDFs (via GPT-4 Vision) and URLs
+- `spacedRepetition.ts` - SM-2 algorithm implementation
 
-### Knowledge Visualization
+### Custom Subject Creation Flow
 
-Uses Cytoscape.js for interactive knowledge graph visualization showing topic relationships and mastery states.
+1. User uploads PDF or enters URL → `contentExtractor.ts` extracts text
+2. PDF pages rendered to images via pdfjs-dist, sent to GPT-4 Vision
+3. Extracted text → `structureGenerator.ts` creates Subject with sections/topics
+4. Subject saved to `customSubjects` in store with `isCustom: true`
+
+### Review Deck System
+
+Cards must be explicitly added to review deck via `addCardToReviewDeck()`. Only cards in `addedToReviewDeck` map appear in subject-level review sessions. This allows users to selectively choose which flashcards to study.
 
 ### LaTeX Support
 
-- `MathText` component for inline/block LaTeX rendering via KaTeX
-- `MarkdownMath` component for mixed Markdown + LaTeX content with auto-detection
+- `MathText` - inline/block LaTeX via KaTeX
+- `MarkdownMath` - mixed Markdown + LaTeX with auto-detection
 
 ### Fonts
 
-Three custom fonts via @fontsource packages:
-- Outfit (geometric sans) for headings/UI
-- Crimson Pro (serif) for body text
-- JetBrains Mono for code/technical elements
+- Outfit (geometric sans) - headings/UI
+- Crimson Pro (serif) - body text
+- JetBrains Mono - code/technical
 
 ## Environment Variables
 
